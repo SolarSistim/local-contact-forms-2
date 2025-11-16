@@ -1,6 +1,6 @@
 [build]
   command = "npm run build"
-  publish = "dist/local-contact-forms-2"
+  publish = "dist/local-contact-forms-2/browser"
   functions = "netlify/functions"
 
 [dev]
