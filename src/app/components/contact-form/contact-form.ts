@@ -155,11 +155,16 @@ export class ContactForm implements OnInit, OnDestroy {
         // Update meta tags for SEO
         this.updateMetaTags(config);
 
-        this.loading = false;
-
-        // Initialize reCAPTCHA after loading
+        // Initialize reCAPTCHA before hiding loader
         if (isPlatformBrowser(this.platformId)) {
-          setTimeout(() => this.initializeRecaptcha(), 100);
+          setTimeout(() => {
+            this.initializeRecaptcha();
+            // Hide loading after reCAPTCHA is initialized
+            this.loading = false;
+          }, 100);
+        } else {
+          // SSR: hide loading immediately
+          this.loading = false;
         }
       },
       error: (err) => {

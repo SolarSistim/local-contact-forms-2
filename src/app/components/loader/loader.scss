@@ -1,17 +1,23 @@
 .loader-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3rem 2rem;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
   text-align: center;
-  width: 100%;
-  min-height: 300px;
 
   .loader-message {
     margin-top: 1.5rem;
-    font-size: 1.1rem;
-    color: var(--theme-form-panel-text);
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--theme-form-panel-text, #333);
   }
 
   ::ng-deep mat-spinner circle {
