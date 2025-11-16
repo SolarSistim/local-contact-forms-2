@@ -87,7 +87,7 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
 
     const globalConfigResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: globalConfigSheetId,
-      range: 'Sheet1!A2:L1000',
+      range: 'tenants_master_sheet!A2:L1000',
     });
 
     const globalRows = globalConfigResponse.data.values || [];
@@ -118,7 +118,7 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: submissionsSheetId,
-      range: 'Sheet1!A:G',
+      range: 'submissions!A:G',
       valueInputOption: 'USER_ENTERED',
       requestBody: {
         values: [rowData],
