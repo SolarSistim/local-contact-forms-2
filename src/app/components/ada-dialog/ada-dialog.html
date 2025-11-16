@@ -1,0 +1,68 @@
+<h2 mat-dialog-title>{{ data.title || 'ADA Statement' }}</h2>
+
+<mat-dialog-content class="app-dialog-content policy-dialog-panel">
+  <section class="app-dialog-section">
+    <p class="app-dialog-last-updated">
+      Last Updated: {{ 'January 1, 2025' }}
+    </p>
+
+    <h3>Accessibility Statement for <strong>localcontactforms.com</strong></h3>
+
+    <p>
+      LocalContactForms.com is committed to providing an accessible digital experience
+      for all users, including individuals with disabilities. This Accessibility
+      Statement explains our efforts to ensure that our website, hosted forms, and
+      subscription-based services can be used effectively by as many people as possible,
+      including those using assistive technologies.
+    </p>
+
+    <h4>Our Accessibility Approach</h4>
+
+    <p>
+      We strive to follow recognized accessibility standards and best practices,
+      including elements of the Web Content Accessibility Guidelines (WCAG). Our goal
+      is to improve usability for people with diverse abilities and to support screen
+      readers, keyboard navigation, and alternative input methods.
+    </p>
+
+    <h4>Feedback and Accessibility Concerns</h4>
+
+    <p>
+      We welcome feedback regarding any accessibility barriers encountered on
+      <strong>localcontactforms.com</strong> or in any client-leased form. If you
+      experience an accessibility issue, please notify us so we can evaluate and
+      address the concern where feasible.
+    </p>
+
+    <p>
+      Email: support@localcontactforms.com<br>
+      Website: https://localcontactforms.com
+    </p>
+
+    <h4>Client and Third-Party Content</h4>
+
+    <p>
+      While LocalContactForms maintains accessibility features within its core
+      platform, some form content, configurations, or embedded media may be created or
+      controlled by <strong>{{ data.clientName || 'our client' }}</strong> or other
+      third parties. Such content may not fully adhere to accessibility standards.
+    </p>
+
+    <p>
+      We encourage Clients to review and maintain accessibility for their own form
+      fields, messages, uploaded content, or linked materials.
+    </p>
+  </section>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" style="padding-top: 15px;">
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="onAcknowledge()"
+    [class.bounce]="shouldBounce"
+  >
+    <mat-icon class="custom-mat-icon">check</mat-icon>
+    I have read this document
+  </button>
+</mat-dialog-actions>

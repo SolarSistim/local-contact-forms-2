@@ -1,0 +1,1823 @@
+Local Contact Forms 2.0
+
+I want to create a new Angular/netlify project.
+
+The project will use Netlify functions and angular server side rendering.
+
+This app will connect to google sheet api and pull tenant configs from the sheets.
+Then the config will be loaded into each tenant, and the website user will be able to submit a contact form to that tenant via netlify email function.
+
+Then each tenant will be configured to load when I visit a url like this:
+
+https://localcontactforms.com/?id=ronnies-pizza-pace
+
+Where ronnies-pizza-pace is the tenant.
+
+Here's an example of a tenant config:
+
+Key	Value	Required?	Description
+business_name	Carl's Car Wash	Yes	The public name of the business as it should appear on the form and email notifications.
+notify_on_submit	cwmpensacola@gmail.com	Yes	The primary email address where form submissions will be sent.
+intro_text	We'd love to hear from you!	Yes	Short welcoming message displayed above the contact form. Can describe services or invite customers to get in touch.
+meta_description	Fantastic Car Washes!	Yes	A brief sentence used for SEO and browser previews. It summarizes what the business offers.
+meta_keywords	shiny, mirror finish, polish	Yes	Comma-separated list of keywords that describe the business (for SEO).
+post_submit_message	Thank you for contacting us!	Yes	Message shown to users after successful form submission.
+business_phone	850-927-0290	Yes	The business’s main contact phone number displayed on the form.
+business_address_1	291 Joel Drive	Yes	The first line of the business’s street address (typically street and number).
+business_address_2		Yes	Additional address information (e.g., suite, floor, or building).
+business_city	Pace	Yes	The city where the business is located.
+business_state	FL	Yes	The state where the business operates.
+business_zip	52142	Yes	The ZIP or postal code for the business address.
+business_web_url	https://www.janes-flowers.com	No	The official business website URL.
+theme	Dark	Yes	The visual style for the form.
+reason_for_contact	I want to set up an appointment., I'm having a problem with my service., I want to cancel my service., Other reason.	Yes	This will populate the Reason for Contact dropdown.
+facebook_url	www.google.com	No	Link to your business Facebook page.
+instagram_url		No	Link to your business Instagram page.
+linkedin_url		No	Link to your business Linkedin page.
+pinterest_url	www.google.com	No	Link to your business Pinterest page.
+reddit_url		No	Link to your business Reddit page.
+tiktok_url		No	Link to your business Tiktok page.
+wechat_url		No	Link to your business Wechat page.
+x_url	www.google.com	No	Link to your business X page.
+youtube_url	www.google.com	No	Link to your business youtube page.
+
+And here's an example of the tenant submissions sheet:
+
+Date	First Name	Last Name	Email	Phone	Reason	Message
+11/15/2025, 5:10:33 PM	fsf	fdsaf	fdsf@aol.com	1231231231	I want to cancel my service.	fdsf
+11/15/2025, 4:12:54 PM	dsad	dsad	dsad@aol.com	1231231231	I want to cancel my service.	dsad
+11/15/2025, 9:11:08 AM	fdsf	fdsf	fdsf@aol.com	1231231231	I want to set up an appointment.	fdsf
+11/15/2025, 3:10:37 PM	fsdf	fdsf	fdsf@aol.com	1231231231	I'm having a problem with my service.	dsfdsf
+11/14/2025, 7:32:30 PM	fdsafds	afdsaf	fnhdusifh@aol.com	1231231231	Other reason.	dsfdsf
+11/14/2025, 1:23:08 PM	test	test	test@aol.com	1231231231	I'm having a problem with my service.	test
+
+And then there's a central global config sheet like this:
+
+tenant_id	tenant_name	test_tenant	config_sheet_id	submissions_sheet_id	status	created_at	owner_email	owner_first_name	owner_last_name	owner_phone_number	rate_limit_per_hour
+janes-flowers-pace	Jane's Flowers	TRUE	1xILOV6GpJIrfeMIYvj_reKo6KTHKevvNCuw3ojaWc0s	1173EBae6WHMIY0E6Cu1s-K3DHtqa2SQ2EWfKEndvxc4	active	11-10-2025	cwmpensacola@gmail.com	Cameron	McCloskey	8504802892	5
+ronnies-pizza-pace	Ronnie's Pizza	TRUE	1yujzEWbFoT3c4tS3rd0UAYWHfGP7dAMt5mVM9bcMpko	10nvM7fd-UPvRd1JJU6hvfz3CpoYGj3hnYnzAgE8qmtw	active	11-11-2025	cwmpensacola@gmail.com	Ronnie	Wilson	8506541245	5
+carls-car-wash	Carl's Car Wash	TRUE	11IqE-KCEiOzz3wpkARrTBoVUMovBmLEoJncKuEBJCMg	1BrqgBbz35KwlzulCcQ4vO7l8YOHp5byXelJ3dh8mEmA	active	11-11-2025	cwmpensacola@gmail.com	Carl	Thompson	8504121452	100
+
+There will be two netlify functions:
+
+One to get the tenant config from the global google sheet
+And one to submit the email on behalf of the tenant.
+
+For server side rendering, each tenant will ahve their page title, meta keywords and meta description filled out per the tenant's config sheet.
+
+There will be several main components:
+
+contact form itself, which loads when going to https://localcontactforms.com/?id=ronnies-pizza-pace
+A component to hold the ada statement
+a component to hold the website terms of service
+a component to hold the provacy policy
+
+A loading component which will display while tenant config sheets are loading, and when submitting the email.
+
+a component to hold the message when the form is submitted, whether is was successful or not, and will show the thank you message from the tenant config sheet:
+
+post_submit_message	Thank you for contacting us!	Yes	Message shown to users after successful form submission.
+
+Use angular services where proper.
+
+The contact form will look like this:
+
+<div class="material-contact-form-container">
+  <!-- Loading State - Full Page Loader 123 -->
+  <app-loader *ngIf="loading" message="Loading contact form..."></app-loader>
+
+  <!-- Error State -->
+  <app-message
+    *ngIf="error && !loading"
+    type="error"
+    title="Unable to Load Form"
+    [message]="error"
+  ></app-message>
+
+  <!-- Success State -->
+  <app-message
+    *ngIf="success && !loading"
+    type="success"
+    title="Message Sent!"
+    [message]="tenantConfig?.post_submit_message || 'Your message has been received.'"
+  ></app-message>
+
+  <!-- Form State -->
+  <mat-card *ngIf="!loading && !success && tenantConfig" class="parent-card-container">
+    <!-- Title and Subtitle Section -->
+    <mat-card-header class="header-section">
+      <mat-card-title>{{ tenantConfig.business_name }}</mat-card-title>
+      <mat-card-subtitle>{{ tenantConfig.intro_text }}</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="content-layout">
+        <!-- Left Panel - Business Info (1/3) -->
+        <div class="info-panel">
+          <div class="info-panel-inner">
+          <h3>Get in Touch</h3>
+
+          <div class="info-item" *ngIf="tenantConfig?.business_address_1">
+            <mat-icon>location_on</mat-icon>
+            <div>
+              <div class="info-header">
+                <strong>Address</strong>
+                <mat-icon
+                  class="copy-icon"
+                  matTooltip="Copy Address"
+                  matTooltipPosition="above"
+                  (click)="copyAddressToClipboard()">
+                  content_copy
+                </mat-icon>
+              </div>
+              <p>{{ tenantConfig.business_address_1 }}<br>
+              <span *ngIf="tenantConfig.business_address_2">{{ tenantConfig.business_address_2 }}<br></span>
+              {{ tenantConfig.business_city }}, {{ tenantConfig.business_state }} {{ tenantConfig.business_zip }}</p>
+            </div>
+          </div>
+
+          <div class="info-item" *ngIf="tenantConfig?.business_phone">
+            <mat-icon>phone</mat-icon>
+            <div>
+              <div class="info-header">
+                <strong>Phone</strong>
+                <mat-icon
+                  class="copy-icon"
+                  matTooltip="Copy Phone"
+                  matTooltipPosition="above"
+                  (click)="copyToClipboard(tenantConfig?.business_phone)">
+                  content_copy
+                </mat-icon>
+              </div>
+              <p><a [href]="'tel:' + tenantConfig.business_phone">{{ tenantConfig.business_phone }}</a></p>
+            </div>
+          </div>
+
+          <div class="info-item" *ngIf="tenantConfig?.notify_on_submit">
+            <mat-icon>email</mat-icon>
+            <div>
+              <div class="info-header">
+                <strong>Email</strong>
+                <mat-icon
+                  class="copy-icon"
+                  matTooltip="Copy Email"
+                  matTooltipPosition="above"
+                  (click)="copyToClipboard(tenantConfig?.notify_on_submit)">
+                  content_copy
+                </mat-icon>
+              </div>
+              <p><a [href]="'mailto:' + tenantConfig.notify_on_submit">{{ tenantConfig.notify_on_submit }}</a></p>
+            </div>
+          </div>
+
+          <div class="info-item" *ngIf="tenantConfig?.business_web_url">
+            <mat-icon>language</mat-icon>
+            <div>
+              <div class="info-header">
+                <strong>Website</strong>
+                <mat-icon
+                  class="copy-icon"
+                  matTooltip="Copy Website Address"
+                  matTooltipPosition="above"
+                  (click)="copyToClipboard(tenantConfig?.business_web_url)">
+                  content_copy
+                </mat-icon>
+              </div>
+              <p><a [href]="tenantConfig.business_web_url" target="_blank" rel="noopener noreferrer">{{ tenantConfig.business_web_url }}</a></p>
+            </div>
+          </div>
+
+          <div class="info-item" *ngIf="hasSocialMedia()">
+            <mat-icon>share</mat-icon>
+            <div>
+              <strong>Follow Us</strong>
+              <div class="social-links">
+                <a *ngIf="tenantConfig?.facebook_url" [href]="tenantConfig.facebook_url" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on Facebook" matTooltipPosition="above">
+                  <img src="/icons/icons8-facebook-50.png" alt="Facebook">
+                </a>
+                <a *ngIf="tenantConfig?.instagram_url" [href]="tenantConfig.instagram_url" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on Instagram" matTooltipPosition="above">
+                  <img src="/icons/icons8-instagram-50.png" alt="Instagram">
+                </a>
+                <a *ngIf="tenantConfig?.linkedin_url" [href]="tenantConfig.linkedin_url" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on LinkedIn" matTooltipPosition="above">
+                  <img src="/icons/icons8-linkedin-circled-50.png" alt="LinkedIn">
+                </a>
+                <a *ngIf="tenantConfig?.pinterest_url" [href]="tenantConfig.pinterest_url" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on Pinterest" matTooltipPosition="above">
+                  <img src="/icons/icons8-pinterest-50.png" alt="Pinterest">
+                </a>
+                <a *ngIf="tenantConfig?.reddit_url" [href]="tenantConfig.reddit_url" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on Reddit" matTooltipPosition="above">
+                  <img src="/icons/icons8-reddit-50.png" alt="Reddit">
+                </a>
+                <a *ngIf="tenantConfig?.tiktok_url" [href]="tenantConfig.tiktok_url" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on TikTok" matTooltipPosition="above">
+                  <img src="/icons/icons8-tiktok-50.png" alt="TikTok">
+                </a>
+                <a *ngIf="tenantConfig?.wechat_url" [href]="tenantConfig.wechat_url" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on WeChat" matTooltipPosition="above">
+                  <img src="/icons/icons8-wechat-50.png" alt="WeChat">
+                </a>
+                <a *ngIf="tenantConfig?.x_url" [href]="tenantConfig.x_url" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on X" matTooltipPosition="above">
+                  <img src="/icons/icons8-x-50.png" alt="X">
+                </a>
+                <a *ngIf="tenantConfig?.youtube_url" [href]="tenantConfig.youtube_url" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on YouTube" matTooltipPosition="above">
+                  <img src="/icons/icons8-youtube-50.png" alt="YouTube">
+                </a>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        </div>
+
+        <!-- Right Panel - Contact Form (2/3) -->
+        <div class="form-panel">
+          <form [formGroup]="contactForm" (ngSubmit)="onSubmit()">
+
+                        <div class="honeypot-field">
+              <label for="website">Website</label>
+              <input 
+                type="text" 
+                id="website" 
+                name="website" 
+                formControlName="website"
+                autocomplete="off"
+                tabindex="-1"
+                aria-hidden="true">
+            </div>
+
+            <!-- First Name / Last Name Row -->
+            <div class="form-row">
+              <mat-form-field appearance="fill">
+                <mat-label>First Name</mat-label>
+                <input matInput formControlName="firstName" placeholder="Enter your first name" required>
+                <mat-error *ngIf="contactForm.get('firstName')?.hasError('required')">
+                  <mat-icon class="error-icon">close</mat-icon> First name is required
+                </mat-error>
+                <mat-error *ngIf="contactForm.get('firstName')?.hasError('minlength')">
+                  <mat-icon class="error-icon">close</mat-icon> First name must have at least 1 character
+                </mat-error>
+                <mat-hint *ngIf="contactForm.get('firstName')?.valid && contactForm.get('firstName')?.value" class="success-hint">
+                  <mat-icon class="success-icon">check_circle</mat-icon> Valid
+                </mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="fill">
+                <mat-label>Last Name</mat-label>
+                <input matInput formControlName="lastName" placeholder="Enter your last name" required>
+                <mat-error *ngIf="contactForm.get('lastName')?.hasError('required')">
+                  <mat-icon class="error-icon">close</mat-icon> Last name is required
+                </mat-error>
+                <mat-error *ngIf="contactForm.get('lastName')?.hasError('minlength')">
+                  <mat-icon class="error-icon">close</mat-icon> Last name must have at least 1 character
+                </mat-error>
+                <mat-hint *ngIf="contactForm.get('lastName')?.valid && contactForm.get('lastName')?.value" class="success-hint">
+                  <mat-icon class="success-icon">check_circle</mat-icon> Valid
+                </mat-hint>
+              </mat-form-field>
+            </div>
+
+            <!-- Email / Phone Row -->
+            <div class="form-row">
+              <mat-form-field appearance="fill">
+                <mat-label>Email</mat-label>
+                <input matInput type="email" formControlName="email" placeholder="your@email.com" required>
+                <mat-error *ngIf="contactForm.get('email')?.hasError('required')">
+                  <mat-icon class="error-icon">close</mat-icon> Email is required
+                </mat-error>
+                <mat-error *ngIf="contactForm.get('email')?.hasError('invalidEmail')">
+                  <mat-icon class="error-icon">close</mat-icon> Please enter a valid email (e.g., name@domain.com)
+                </mat-error>
+                <mat-hint *ngIf="contactForm.get('email')?.valid && contactForm.get('email')?.value" class="success-hint">
+                  <mat-icon class="success-icon">check_circle</mat-icon> Valid
+                </mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="fill">
+                <mat-label>Phone</mat-label>
+                <input matInput type="tel" formControlName="phone" placeholder="(555) 123-4567" required>
+                <mat-error *ngIf="contactForm.get('phone')?.hasError('required')">
+                  <mat-icon class="error-icon">close</mat-icon> Phone number is required
+                </mat-error>
+                <mat-error *ngIf="contactForm.get('phone')?.hasError('invalidPhone')">
+                  <mat-icon class="error-icon">close</mat-icon> Phone must contain only numbers
+                </mat-error>
+                <mat-error *ngIf="contactForm.get('phone')?.hasError('phoneLength')">
+                  <mat-icon class="error-icon">close</mat-icon> Phone must be 10 digits
+                </mat-error>
+                <mat-error *ngIf="contactForm.get('phone')?.hasError('invalidFormat')">
+                  <mat-icon class="error-icon">close</mat-icon> Invalid format (e.g., (555) 123-4567)
+                </mat-error>
+                <mat-hint *ngIf="contactForm.get('phone')?.valid && contactForm.get('phone')?.value" class="success-hint">
+                  <mat-icon class="success-icon">check_circle</mat-icon> Valid
+                </mat-hint>
+              </mat-form-field>
+            </div>
+
+            <!-- Reason for Contact Row -->
+            <div class="form-row-full">
+              <mat-form-field appearance="fill">
+                <mat-label>Reason for Contact</mat-label>
+                <mat-select formControlName="reason" required>
+                  <mat-option *ngFor="let option of reasonOptions" [value]="option">
+                    {{ option }}
+                  </mat-option>
+                </mat-select>
+                <mat-error *ngIf="contactForm.get('reason')?.hasError('required')">
+                  <mat-icon class="error-icon">close</mat-icon> Reason is required
+                </mat-error>
+                <mat-hint *ngIf="contactForm.get('reason')?.valid && contactForm.get('reason')?.value" class="success-hint">
+                  <mat-icon class="success-icon">check_circle</mat-icon> Valid
+                </mat-hint>
+              </mat-form-field>
+            </div>
+
+            <!-- Message Row -->
+            <div class="form-row-full">
+              <mat-form-field appearance="fill">
+                <mat-label>Message</mat-label>
+                <textarea
+                  matInput
+                  formControlName="message"
+                  placeholder="Tell us more about your inquiry..."
+                  rows="5"
+                ></textarea>
+                <mat-hint *ngIf="contactForm.get('message')?.valid && contactForm.get('message')?.value" class="success-hint">
+                  <mat-icon class="success-icon">check_circle</mat-icon> Valid
+                </mat-hint>
+              </mat-form-field>
+            </div>
+
+            <!-- Error Display -->
+            <div *ngIf="error" class="form-error-message">
+              <mat-icon>warning</mat-icon>
+              {{ error }}
+            </div>
+
+            <!-- Submit Button -->
+            <div class="form-actions">
+
+            <div class="recaptcha-container">
+              <div id="recaptcha-element"></div>
+              <mat-error *ngIf="contactForm.get('recaptchaToken')?.invalid && contactForm.get('recaptchaToken')?.touched">
+                Please complete the reCAPTCHA verification
+              </mat-error>
+            </div>
+
+              <button
+                mat-raised-button
+                color="primary"
+                type="submit"
+                [disabled]="!contactForm.valid || submitting"
+                [matTooltip]="!contactForm.valid ? 'Please complete the form before submitting' : ''"
+                [matTooltipDisabled]="contactForm.valid"
+              >
+                <mat-icon *ngIf="!submitting">send</mat-icon>
+                <mat-spinner diameter="20" *ngIf="submitting" class="button-spinner"></mat-spinner>
+                <span class="button-text button-text-send" *ngIf="!submitting">Send</span>
+                <span class="button-text button-text-sending" *ngIf="submitting">Sending...</span>
+              </button>
+            </div>
+
+
+          </form>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<!-- Sticky Footer -->
+<footer class="sticky-footer">
+  <div class="footer-content">
+    <span>Copyright 2025 © <a href="https://localcontactforms.com" target="_blank" rel="noopener noreferrer">LocalContactForms.com</a></span>
+    
+    <!-- Desktop separators and links -->
+    <span class="separator desktop-only">|</span>
+    <span class="desktop-only footer-link" (click)="openPolicyDialog('terms')">Terms of Service</span>
+    <span class="separator desktop-only">|</span>
+    <span class="desktop-only footer-link" (click)="openPolicyDialog('privacy')">Privacy Policy</span>
+    <span class="separator desktop-only">|</span>
+    <span class="desktop-only footer-link" (click)="openPolicyDialog('ada')">ADA Statement</span>
+    
+    <!-- Mobile menu button -->
+    <button class="mobile-menu-button" [matMenuTriggerFor]="footerMenu" mat-icon-button>
+      <mat-icon>keyboard_arrow_up</mat-icon>
+    </button>
+  </div>
+</footer>
+
+<!-- Material Menu -->
+<mat-menu #footerMenu="matMenu" yPosition="above">
+  <button mat-menu-item (click)="openPolicyDialog('terms')">Terms of Service</button>
+  <button mat-menu-item (click)="openPolicyDialog('privacy')">Privacy Policy</button>
+  <button mat-menu-item (click)="openPolicyDialog('ada')">ADA Statement</button>
+</mat-menu>
+
+
+.material-contact-form-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+  color: var(--theme-form-panel-text);
+  background-color: transparent;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 60px); // Subtract footer height: 2rem padding (32px) + content (~28px) = ~60px
+  box-sizing: border-box;
+
+  .loading-card,
+  .error-card,
+  .success-card {
+    text-align: center;
+    padding: 3rem 2rem;
+    border-radius: 8px;
+    margin: 2rem 0;
+    width: 100%;
+  }
+
+  .loading-card {
+    background-color: var(--theme-form-panel-background);
+    color: var(--theme-form-panel-text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .error-card {
+    background-color: rgba(204, 51, 51, 0.1);
+    border: 1px solid rgba(204, 51, 51, 0.3);
+    color: var(--theme-error-color);
+
+    .error-icon { color: var(--theme-error-color); margin-right: 0.5rem; }
+  }
+
+  .success-card {
+    background-color: rgba(51, 204, 51, 0.1);
+    border: 1px solid rgba(51, 204, 51, 0.3);
+    color: var(--theme-success-color);
+
+    h2 { color: var(--theme-success-color); margin-top: 0; }
+    .success-icon { color: var(--theme-success-color); font-size: 3rem; margin-bottom: 1rem; }
+    button { margin-top: 1rem; }
+  }
+}
+
+.parent-card-container {
+  margin-top: 20px;
+  margin-bottom: 55px;
+}
+
+// Sticky Footer Styles
+.sticky-footer {
+  opacity: 0.3;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--theme-header-background, #f5f5f5);
+  color: var(--theme-header-text, #333);
+  border-top: 1px solid var(--theme-border-color, #ddd);
+  padding: 1rem 2rem;
+  z-index: 1000;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  height: 6px;
+  
+  .footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    font-size: 0.875rem;
+    line-height: 8px;
+    
+    a {
+      color: var(--theme-header-text, #0066cc);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s ease;
+      
+      &:hover {
+        color: var(--theme-secondary, #0052a3);
+        text-decoration: underline;
+      }
+    }
+    
+    .separator {
+      color: var(--theme-header-text, #666);
+      opacity: 0.5;
+      margin: 0 0.25rem;
+    }
+    
+    span:not(.separator) {
+      white-space: nowrap;
+    }
+    
+    .mobile-menu-button {
+      display: none;
+      width: 32px;
+      height: 32px;
+      line-height: 32px;
+      padding: 0;
+      margin-left: 0.5rem;
+      
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+        line-height: 24px;
+      }
+    }
+  }
+  
+  @media (max-width: 768px) {
+    padding: 0.75rem 1rem;
+    height: 10px;
+    
+    .footer-content {
+      font-size: 0.75rem;
+      gap: 0.25rem;
+      line-height: 24px;
+      position: relative;
+      bottom: 10px; // Raise the content 15px on mobile
+      
+      .desktop-only {
+        display: none;
+      }
+      
+      .mobile-menu-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .separator {
+        margin: 0 0.15rem;
+      }
+    }
+  }
+  
+  @media (max-width: 480px) {
+    height: 20px;
+    
+    .footer-content {
+      font-size: 0.7rem;
+      justify-content: center;
+      text-align: center;
+      line-height: 20px;
+      bottom: 5px;
+    }
+  }
+}
+
+mat-card {
+  background-color: var(--theme-form-panel-background) !important;
+  color: var(--theme-form-panel-text) !important;
+  width: 100%;
+  box-sizing: border-box;
+
+  // Header Section - Full Width
+  .header-section {
+    background-color: var(--theme-header-background);
+    padding: 1.5rem;
+    margin-top: -1rem;
+    border-radius: 4px 4px 0 0;
+    border-bottom: 1px solid var(--theme-border-color);
+
+    mat-card-title {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      color: var(--theme-header-text);
+    }
+
+    mat-card-subtitle {
+      font-size: 1rem;
+      line-height: 1.5;
+      color: var(--theme-header-text);
+    }
+  }
+}
+
+mat-card-content {
+  padding: 0px;
+  padding-bottom: 0px !important;
+}
+
+// Main Content Layout: Info Panel (1/3) + Form Panel (2/3)
+.content-layout {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+
+  @media (max-width: 960px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Left Panel - Business Information (1/3)
+.info-panel {
+  background-color: var(--theme-info-panel-background);
+  color: var(--theme-info-panel-text);
+  border-bottom-left-radius: 8px;
+  border-right: 1px solid var(--theme-border-color);
+
+  .info-panel-inner {
+    margin: 18px;
+
+    h3 {
+      color: var(--theme-info-panel-heading);
+    }
+
+  }
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.25rem;
+    color: var(--theme-info-panel-heading);
+  }
+
+  .info-item {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    align-items: flex-start;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    a {
+      color: var(--theme-info-panel-text);
+    }
+
+    mat-icon {
+      color: var(--theme-info-panel-icon);
+      margin-top: 0.25rem;
+      flex-shrink: 0;
+    }
+
+    strong {
+      display: block;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--theme-info-panel-text);
+      margin-bottom: 0.25rem;
+    }
+
+    .info-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.25rem;
+
+      strong {
+        margin-bottom: 0;
+      }
+
+      .copy-icon {
+        font-size: 14px !important;
+        width: 16px !important;
+        height: 16px !important;
+        cursor: pointer;
+        opacity: 0.7;
+        transition: opacity 0.3s ease;
+        position: relative;
+        top: -2px;
+
+        &:hover {
+          opacity: 1;
+        }
+      }
+    }
+
+    p {
+      margin: 0;
+      line-height: 1.6;
+      color: var(--theme-info-panel-text);
+    }
+
+    .social-links {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+
+      a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.2);
+          transform: scale(1.1);
+        }
+
+        img {
+          width: 20px;
+          height: 20px;
+          filter: brightness(0) saturate(100%);
+          opacity: 0.8;
+
+          @media (prefers-color-scheme: light) {
+            filter: brightness(0) saturate(100%);
+          }
+
+          @media (prefers-color-scheme: dark) {
+            filter: brightness(1) saturate(100%);
+          }
+        }
+      }
+    }
+  }
+}
+
+// Right Panel - Contact Form (2/3)
+.form-panel {
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 18px;
+  }
+
+  ::ng-deep mat-form-field {
+    border-radius: 10px;
+  }
+
+  mat-form-field {
+    ::ng-deep {
+      border-radius: 10px;
+      .mat-mdc-form-field-error-wrapper { padding-left: 0px !important; margin-top: 5px; }
+      .mat-mdc-form-field-hint-wrapper { padding-left: 0px !important;  margin-top: 5px; }
+      .mat-mdc-form-field-label { color: var(--theme-form-field-text) !important; }
+      .mdc-text-field__input { color: var(--theme-form-field-text) !important; }
+      .mdc-text-field { background-color: var(--theme-form-field-background) !important; border-radius: 6px; }
+      .mat-mdc-form-field-error { color: var(--theme-error-color) !important; }
+      .mdc-notched-outline__leading,
+      .mdc-notched-outline__notch,
+      .mdc-notched-outline__trailing { border-color: var(--theme-form-field-border) !important; }
+      .mdc-text-field--focused .mdc-notched-outline__leading,
+      .mdc-text-field--focused .mdc-notched-outline__notch,
+      .mdc-text-field--focused .mdc-notched-outline__trailing { border-color: var(--theme-form-field-border) !important; }
+    }
+  }
+
+  // Two-column row (First/Last Name, Email/Phone)
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+
+    mat-form-field {
+      width: 100%;
+    }
+
+    @media (max-width: 600px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // Full-width row (Reason, Message)
+  .form-row-full {
+    mat-form-field {
+      width: 100%;
+    }
+  }
+
+  .form-error-message {
+    background-color: rgba(204, 51, 51, 0.1);
+    color: var(--theme-error-color);
+    padding: 1rem;
+    border-radius: 4px;
+    border: 1px solid rgba(204, 51, 51, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+
+    mat-icon { flex-shrink: 0; }
+  }
+
+  // Form field validation icons
+  ::ng-deep {
+    .error-icon {
+      color: var(--theme-error-color) !important;
+      font-size: 18px !important;
+      width: 18px !important;
+      height: 18px !important;
+      display: inline-flex !important;
+      margin-right: 4px !important;
+    }
+
+    .success-hint {
+      color: var(--theme-success-color) !important;
+      display: flex !important;
+      align-items: center !important;
+
+      .success-icon {
+        color: var(--theme-success-color) !important;
+        font-size: 18px !important;
+        width: 18px !important;
+        height: 18px !important;
+        margin: 0 !important;
+      }
+    }
+
+    mat-error {
+      display: flex !important;
+      align-items: center !important;
+    }
+  }
+
+  // Button alignment
+  .form-actions {
+  display: flex;
+  justify-content: space-between; // recaptcha left, button right
+  align-items: flex-end;          // bottom-align both
+  margin-top: 1rem;
+  width: 100%;                    // ensure it spans the container
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 120px;
+    background-color: var(--theme-button-enabled-background) !important;
+    color: var(--theme-button-enabled-text) !important;
+
+    &:hover:not(:disabled) {
+      background-color: var(--theme-button-hover-background) !important;
+      color: var(--theme-button-hover-text) !important;
+    }
+
+    &:disabled {
+      background-color: var(--theme-button-disabled-background) !important;
+      color: var(--theme-button-disabled-text) !important;
+      opacity: 1;
+    }
+
+    .button-spinner {
+      display: inline-block;
+      margin-top: 4px;
+      margin-right: 6px;
+
+      ::ng-deep {
+        circle {
+          stroke: var(--theme-spinner-color) !important;
+        }
+      }
+    }
+
+    .button-text-send {
+      position: relative !important;
+      top: 0px !important;
+    }
+
+    .button-text-sending {
+      position: relative !important;
+      top: -4px !important;
+    }
+  }
+}
+
+
+}
+
+// End angular material form
+
+
+.contact-form-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: var(--theme-background);
+  color: var(--theme-text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+
+  .loading,
+  .error,
+  .success {
+    padding: 2rem;
+    text-align: center;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+  }
+
+  .loading {
+    background-color: var(--theme-secondary);
+    color: var(--theme-text);
+  }
+
+  .error {
+    background-color: rgba(204, 51, 51, 0.1);
+    color: var(--theme-error);
+    border: 1px solid rgba(204, 51, 51, 0.3);
+  }
+
+  .success {
+    background-color: rgba(51, 204, 51, 0.1);
+    color: var(--theme-success);
+    border: 1px solid rgba(51, 204, 51, 0.3);
+
+    h2 {
+      margin-top: 0;
+      color: var(--theme-success);
+    }
+
+    p {
+      margin: 1rem 0;
+    }
+
+    .btn-reset {
+      background-color: var(--theme-success);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+
+      &:hover {
+        background-color: var(--theme-primary);
+      }
+    }
+  }
+
+  .form-wrapper {
+    h1 {
+      color: var(--theme-text);
+      margin-bottom: 0.5rem;
+      font-size: 2rem;
+    }
+
+    .intro-text {
+      color: var(--theme-text-secondary);
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-switcher {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+
+      .switcher-btn {
+        flex: 1;
+        padding: 0.75rem 1.5rem;
+        border: 2px solid var(--theme-border);
+        background-color: var(--theme-surface);
+        color: var(--theme-text);
+        cursor: pointer;
+
+        &.active {
+          background-color: var(--theme-primary);
+          color: white;
+          border-color: var(--theme-primary);
+        }
+      }
+    }
+
+    .tenant-info {
+      background-color: var(--theme-surface);
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      border-left: 4px solid var(--theme-primary);
+
+      .info-item {
+        margin-bottom: 1rem;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        strong {
+          display: block;
+          color: var(--theme-text);
+          margin-bottom: 0.25rem;
+        }
+
+        a {
+          color: var(--theme-text);
+          text-decoration: none;
+
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+
+        div {
+          color: var(--theme-text-secondary);
+          font-size: 0.95rem;
+        }
+      }
+    }
+  }
+
+  .contact-form {
+    background-color: var(--theme-background);
+    padding: 0;
+    border-radius: 8px;
+
+    .form-group {
+      margin-bottom: 1.5rem;
+
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--theme-text);
+        font-size: 0.95rem;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--theme-border);
+        border-radius: 4px;
+        font-size: 1rem;
+        font-family: inherit;
+        background-color: var(--theme-surface);
+        color: var(--theme-text);
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+
+        &:focus {
+          outline: none;
+          border-color: var(--theme-primary);
+          box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+        }
+
+        &.error {
+          border-color: var(--theme-error);
+
+          &:focus {
+            box-shadow: 0 0 0 3px rgba(204, 51, 51, 0.1);
+          }
+        }
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 120px;
+      }
+    }
+
+    .error-text {
+      display: block;
+      color: var(--theme-error);
+      font-size: 0.85rem;
+      margin-top: 0.25rem;
+    }
+
+    .form-error {
+      background-color: rgba(204, 51, 51, 0.1);
+      color: var(--theme-error);
+      padding: 1rem;
+      border-radius: 4px;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(204, 51, 51, 0.3);
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 0.875rem;
+      background-color: var(--theme-primary);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+
+      &:hover:not(:disabled) {
+        background-color: var(--theme-secondary);
+        color: var(--theme-text);
+      }
+
+      &:disabled {
+        background-color: var(--theme-border);
+        cursor: not-allowed;
+      }
+    }
+
+    .contact-form-material {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+
+      .form-field-material {
+        width: 100%;
+
+        &.full-width {
+          width: 100%;
+        }
+      }
+
+      .material-submit-btn {
+        margin-top: 1rem;
+        width: 100%;
+      }
+
+      .form-error {
+        background-color: rgba(204, 51, 51, 0.1);
+        color: var(--theme-error);
+        padding: 1rem;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+        border: 1px solid rgba(204, 51, 51, 0.3);
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .material-contact-form-container {
+    min-height: calc(100vh - 56px); // Adjust for smaller footer on tablet
+  }
+  
+  .contact-form-container {
+    padding: 1rem;
+
+    .form-wrapper {
+      h1 {
+        font-size: 1.5rem;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .material-contact-form-container {
+    min-height: calc(100vh - 52px); // Adjust for smaller footer on mobile
+  }
+}
+
+// Policy dialog layout
+::ng-deep .policy-dialog-panel .mat-mdc-dialog-surface {
+  // Desktop baseline: width is already controlled via config
+  border-radius: 8px;
+}
+
+// Full-screen mobile adjustments (extra safety on top of TS widths)
+@media (max-width: 600px) {
+  ::ng-deep .policy-dialog-panel .mat-mdc-dialog-surface {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+}
+
+// Optional: make the footer links look clickable
+.footer-link {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Policy dialog: force background & text to match info panel exactly */
+::ng-deep .policy-dialog-panel .mat-mdc-dialog-surface {
+  background-color: var(--theme-info-panel-background) !important;
+  color: var(--theme-info-panel-text) !important;
+  box-shadow: none; /* keep/no elevation */
+  border: 1px solid var(--theme-border-color); /* match form header border color */
+  border-radius: 8px; /* optional: match your card radius if you want */
+}
+
+@media (max-width: 960px) {
+  /* Make the overlay pane cover the full viewport on tablet and below */
+  ::ng-deep .cdk-overlay-pane.policy-dialog-panel {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+  }
+
+  /* Make the dialog surface fill the pane and become a flex column */
+  ::ng-deep .policy-dialog-panel .mat-mdc-dialog-surface {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 0 !important;
+    display: flex !important;
+    flex-direction: column;
+  }
+
+  /* Let the content area be the scrollable flex child */
+  ::ng-deep .policy-dialog-panel .mat-mdc-dialog-content {
+    flex: 1 1 auto;
+    overflow-y: auto;
+  }
+
+  /* Keep the actions stuck at the bottom, right-aligned */
+  ::ng-deep .policy-dialog-panel .mat-mdc-dialog-actions {
+    flex-shrink: 0;
+    margin-top: 0;
+    padding: 0 16px 16px;
+    justify-content: flex-end;
+  }
+
+  ::ng-deep .cdk-global-overlay-wrapper {
+    overflow: hidden !important;
+  }
+
+}
+
+
+
+/* Ensure all inner dialog content inherits the same text color */
+::ng-deep .policy-dialog-panel .mat-mdc-dialog-title,
+::ng-deep .policy-dialog-panel .mat-mdc-dialog-content,
+::ng-deep .policy-dialog-panel .mat-mdc-dialog-content p,
+::ng-deep .policy-dialog-panel .mat-mdc-dialog-content h1,
+::ng-deep .policy-dialog-panel .mat-mdc-dialog-content h2,
+::ng-deep .policy-dialog-panel .mat-mdc-dialog-content h3,
+::ng-deep .policy-dialog-panel .mat-mdc-dialog-actions {
+  color: var(--theme-info-panel-text) !important;
+}
+
+/* Dialog action button: match the Send button styles */
+::ng-deep .policy-dialog-panel .mat-mdc-dialog-actions button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 120px;
+  background-color: var(--theme-button-enabled-background) !important;
+  color: var(--theme-button-enabled-text) !important;
+
+  &:hover:not(:disabled) {
+    background-color: var(--theme-button-hover-background) !important;
+    color: var(--theme-button-hover-text) !important;
+  }
+
+  &:disabled {
+    background-color: var(--theme-button-disabled-background) !important;
+    color: var(--theme-button-disabled-text) !important;
+    opacity: 1;
+  }
+}
+
+.recaptcha-container {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  
+  #recaptcha-element {
+    margin-bottom: 8px;
+  }
+  
+  mat-error {
+    font-size: 12px;
+    color: #f44336;
+  }
+}
+
+// Ensure reCAPTCHA is responsive on mobile
+@media (max-width: 600px) {
+  .recaptcha-container {
+    #recaptcha-element {
+      transform: scale(0.85);
+      transform-origin: 0 0;
+    }
+  }
+}
+
+.honeypot-field {
+  // Method 1: Position absolutely off-screen (RECOMMENDED)
+  // This is the most reliable method
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  overflow: hidden;
+  pointer-events: none;
+  label {
+    position: absolute;
+    left: -9999px;
+  }
+  
+  input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    border: 0;
+    clip: rect(0, 0, 0, 0);
+    overflow: hidden;
+  }
+}
+
+The ada, website agreement and provacy policy will all have the same style sheet, and look like this:
+
+<h2 mat-dialog-title>{{ data.title || 'ADA Statement' }}</h2>
+
+<mat-dialog-content class="app-dialog-content policy-dialog-panel">
+  <section class="app-dialog-section">
+    <p class="app-dialog-last-updated">
+      Last Updated: {{ 'January 1, 2025' }}
+    </p>
+
+    <h3>Accessibility Statement for <strong>localcontactforms.com</strong></h3>
+
+    <p>
+      LocalContactForms.com is committed to providing an accessible digital experience
+      for all users, including individuals with disabilities. This Accessibility
+      Statement explains our efforts to ensure that our website, hosted forms, and
+      subscription-based services can be used effectively by as many people as possible,
+      including those using assistive technologies.
+    </p>
+
+    <h4>Our Accessibility Approach</h4>
+
+    <p>
+      We strive to follow recognized accessibility standards and best practices,
+      including elements of the Web Content Accessibility Guidelines (WCAG). Our goal
+      is to improve usability for people with diverse abilities and to support screen
+      readers, keyboard navigation, and alternative input methods.
+    </p>
+
+    <h4>Feedback and Accessibility Concerns</h4>
+
+    <p>
+      We welcome feedback regarding any accessibility barriers encountered on
+      <strong>localcontactforms.com</strong> or in any client-leased form. If you
+      experience an accessibility issue, please notify us so we can evaluate and
+      address the concern where feasible.
+    </p>
+
+    <p>
+      Email: support@localcontactforms.com  
+      Website: https://localcontactforms.com
+    </p>
+
+    <h4>Client and Third-Party Content</h4>
+
+    <p>
+      While LocalContactForms maintains accessibility features within its core
+      platform, some form content, configurations, or embedded media may be created or
+      controlled by <strong>{{ data.clientName || 'our client' }}</strong> or other
+      third parties. Such content may not fully adhere to accessibility standards.
+    </p>
+
+    <p>
+      We encourage Clients to review and maintain accessibility for their own form
+      fields, messages, uploaded content, or linked materials.
+    </p>
+  </section>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" style="padding-top: 15px;">
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="onAcknowledge()"
+    [class.bounce]="shouldBounce"
+  >
+    <mat-icon class="cutom-mat-icon">check</mat-icon>
+    I have read this document
+  </button>
+</mat-dialog-actions>
+
+/* dialog-styles.scss */
+
+/* Generic scrollable dialog content */
+.app-dialog-content {
+  max-height: 70vh;
+  overflow: auto;
+
+  font-size: 1rem;
+  line-height: 1.7;
+
+  /* Firefox scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--theme-info-panel-text) var(--theme-info-panel-background);
+}
+
+/* On tablet & below (full-screen), let the flex layout control height */
+@media (max-width: 960px) {
+  .app-dialog-content {
+    max-height: none;
+  }
+}
+
+/* Sections inside dialogs */
+.app-dialog-section {
+  margin-bottom: 1.5rem;
+}
+
+.app-dialog-section h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.app-dialog-section h4 {
+  font-size: 1.1rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.35rem;
+  font-weight: 600;
+}
+
+.app-dialog-section p {
+  margin: 0.35rem 0;
+}
+
+.app-dialog-section ul {
+  margin: 0.35rem 0 0.75rem;
+  padding-left: 1.4rem;
+}
+
+.app-dialog-section li {
+  margin-bottom: 0.25rem;
+}
+
+.app-dialog-last-updated {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-bottom: 1rem;
+}
+
+/* Scrollbars when using policy-dialog-panel */
+.policy-dialog-panel .mat-mdc-dialog-content {
+  scrollbar-width: thin;
+  scrollbar-color: var(--theme-info-panel-text) var(--theme-info-panel-background);
+}
+
+.policy-dialog-panel .mat-mdc-dialog-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.policy-dialog-panel .mat-mdc-dialog-content::-webkit-scrollbar-track {
+  background-color: var(--theme-info-panel-background);
+}
+
+.policy-dialog-panel .mat-mdc-dialog-content::-webkit-scrollbar-thumb {
+  background-color: var(--theme-info-panel-text);
+  border-radius: 3px;
+}
+
+/* =============================== */
+/* Dialog container + header/body/footer theming */
+/* =============================== */
+
+/* Whole dialog surface */
+.policy-dialog-panel .mat-mdc-dialog-surface {
+  background-color: var(--theme-info-panel-background);
+  color: var(--theme-info-panel-text);
+  box-shadow: none;
+  border: 1px solid var(--theme-border-color);
+  border-radius: 8px;
+}
+
+/* Header (mat-dialog-title wrapper) */
+.policy-dialog-panel .mat-mdc-dialog-title,
+.policy-dialog-panel h2[mat-dialog-title] {
+  background-color: var(--theme-info-panel-background);
+  color: var(--theme-info-panel-text);
+  margin: 0;
+  padding: 16px 24px;
+  font-weight: 600;
+}
+
+/* Body/content */
+.policy-dialog-panel .mat-mdc-dialog-content {
+  background-color: var(--theme-info-panel-background);
+  color: var(--theme-info-panel-text);
+  padding: 0 24px 16px 24px;
+}
+
+/* Footer/actions */
+.policy-dialog-panel .mat-mdc-dialog-actions {
+  background-color: var(--theme-info-panel-background);
+  color: var(--theme-info-panel-text);
+  padding: 8px 24px 16px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Make text inside content inherit properly */
+.policy-dialog-panel .mat-mdc-dialog-content p,
+.policy-dialog-panel .mat-mdc-dialog-content h1,
+.policy-dialog-panel .mat-mdc-dialog-content h2,
+.policy-dialog-panel .mat-mdc-dialog-content h3 {
+  color: var(--theme-info-panel-text);
+}
+
+/* =============================== */
+/* Full-screen mobile layout */
+/* =============================== */
+
+@media (max-width: 960px) {
+  .cdk-overlay-pane.policy-dialog-panel {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+  }
+
+  .policy-dialog-panel .mat-mdc-dialog-surface {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 0 !important;
+    display: flex !important;
+    flex-direction: column;
+  }
+
+  .policy-dialog-panel .mat-mdc-dialog-content {
+    flex: 1 1 auto;
+    overflow-y: auto;
+  }
+
+  .policy-dialog-panel .mat-mdc-dialog-actions {
+    flex-shrink: 0;
+    margin-top: 0;
+    padding: 0 16px 16px;
+    justify-content: flex-end;
+  }
+
+  .cdk-global-overlay-wrapper {
+    overflow: hidden !important;
+  }
+}
+
+/* Dialog action button: match the Send button styles */
+.policy-dialog-panel .mat-mdc-dialog-actions button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 120px;
+  background-color: var(--theme-button-enabled-background) !important;
+  color: var(--theme-button-enabled-text) !important;
+
+  &:hover:not(:disabled) {
+    background-color: var(--theme-button-hover-background) !important;
+    color: var(--theme-button-hover-text) !important;
+  }
+
+  &:disabled {
+    background-color: var(--theme-button-disabled-background) !important;
+    color: var(--theme-button-disabled-text) !important;
+    opacity: 1;
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-10px);
+  }
+  50% {
+    transform: translateY(0);
+  }
+  75% {
+    transform: translateY(-5px);
+  }
+}
+
+button.bounce {
+  animation: bounce 0.6s ease;
+}
+
+/* Slightly larger base font inside policy dialogs */
+.policy-dialog-panel .app-dialog-content {
+  font-size: 1.05rem;  /* ~5% larger than default */
+  line-height: 1.8;    /* a bit more spacing for readability */
+}
+
+/* Make section headings more prominent */
+.policy-dialog-panel .app-dialog-section h3 {
+  font-size: 1.35rem;
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+}
+
+.policy-dialog-panel .app-dialog-section h4 {
+  font-size: 1.5rem;
+  margin-top: 1rem;
+  margin-bottom: 0.4rem;
+}
+
+/* Increase spacing between paragraphs and lists slightly */
+.policy-dialog-panel .app-dialog-section p {
+  margin: 0.4rem 0;
+}
+
+.policy-dialog-panel .app-dialog-section ul {
+  margin: 0.5rem 0 0.9rem;
+}
+
+::ng-deep mat-icon {
+  font-size: 20px;
+  position: relative;
+  margin-right: 0px !important;
+}
+
+Contact form themes will be selected from a google sheet dropdown and work with a theme service like this:
+
+const THEMES: Record<ThemeName, ThemeColors> = {
+  'Fern': {
+    headerBackground: '#2C4E38',
+    headerText: '#E8E2D4',
+    infoPanelBackground: '#222017',
+    infoPanelText: '#DBC66E',
+    infoPanelHeading: '#DBC66E',
+    infoPanelIcon: '#DBC66E',
+    formPanelBackground: '#DBC66E',
+    formPanelText: '#222017',
+    formFieldBorder: '#222017',
+    formFieldBackground: '#f1f8f5',
+    formFieldText: '#222017',
+    buttonEnabledBackground: '#2C4E38',
+    buttonEnabledText: '#E8E2D4',
+    buttonDisabledBackground: '#b19f58ff',
+    buttonDisabledText: '#2C4E38',
+    buttonHoverBackground: '#245a39',
+    buttonHoverText: '#ffffff',
+    spinnerColor: '#DBC66E',
+    pageBackground: '#15130B',
+    errorColor: '#cc3333',
+    successColor: '#2d8a4a',
+    borderColor: '#245a39'
+  },
+  'Lilac': {
+    headerBackground: '#573E5C',
+    headerText: '#FAD8FD',
+    infoPanelBackground: '#1D2024',
+    infoPanelText: '#AAC7FF',
+    infoPanelHeading: '#AAC7FF',
+    infoPanelIcon: '#6B5B95',
+    formPanelBackground: '#F5F1F8',
+    formPanelText: '#4A3F6B',
+    formFieldBorder: '#D4C5E8',
+    formFieldBackground: '#FAFAF9',
+    formFieldText: '#4A3F6B',
+    buttonEnabledBackground: '#6B5B95',
+    buttonEnabledText: '#F5F1F8',
+    buttonDisabledBackground: '#D4C5E8',
+    buttonDisabledText: '#8B7BA8',
+    buttonHoverBackground: '#5A4A84',
+    buttonHoverText: '#F5F1F8',
+    spinnerColor: '#6B5B95',
+    pageBackground: '#111318',
+    errorColor: '#cc3333',
+    successColor: '#66cc99',
+    borderColor: '#D4C5E8'
+  },
+  'Lemoncello': {
+    headerBackground: '#DBC66E',
+    headerText: '#3A3000',
+    infoPanelBackground: '#222017',
+    infoPanelText: '#DBC66E',
+    infoPanelHeading: '#DBC66E',
+    infoPanelIcon: '#b19131ff',
+    formPanelBackground: '#fff8dcff',
+    formPanelText: '#4A4226',
+    formFieldBorder: '#F4E4AA',
+    formFieldBackground: '#ffffffff',
+    formFieldText: '#4A4226',
+    buttonEnabledBackground: '#F4C430',
+    buttonEnabledText: '#2C2416',
+    buttonDisabledBackground: '#F4E4AA',
+    buttonDisabledText: '#8B8B6A',
+    buttonHoverBackground: '#DAA520',
+    buttonHoverText: '#2C2416',
+    spinnerColor: '#F4C430',
+    pageBackground: '#15130B',
+    errorColor: '#cc3333',
+    successColor: '#66cc99',
+    borderColor: '#F4E4AA'
+  },
+  'Sapphire': {
+    headerBackground: '#214C57',
+    headerText: '#BEEAF7',
+    infoPanelBackground: '#1C211C',
+    infoPanelText: '#95D5A8',
+    infoPanelHeading: '#95D5A8',
+    infoPanelIcon: '#669273ff',
+    formPanelBackground: '#e6f9ffff',
+    formPanelText: '#000D12',
+    formFieldBorder: '#1C211C',
+    formFieldBackground: '#FFFFF0',
+    formFieldText: '#000D12',
+    buttonEnabledBackground: '#214C57',
+    buttonEnabledText: '#BEEAF7',
+    buttonDisabledBackground: 'rgba(52, 114, 129, 1)',
+    buttonDisabledText: '#95D5A8',
+    buttonHoverBackground: '#214C57',
+    buttonHoverText: '#BEEAF7',
+    spinnerColor: '#95D5A8',
+    pageBackground: '#0F1511',
+    errorColor: '#cc3333',
+    successColor: '#66cc99',
+    borderColor: '#95D5A8'
+  },
+  'Crimson': {
+    headerBackground: '#7D1F26',
+    headerText: '#FDECEC',
+    infoPanelBackground: '#1E1718',
+    infoPanelText: '#E6A3A3',
+    infoPanelHeading: '#E6A3A3',
+    infoPanelIcon: '#A84C55',
+    formPanelBackground: '#FFF7F7',
+    formPanelText: '#4A1F22',
+    formFieldBorder: '#E4B8B8',
+    formFieldBackground: '#FFFBFB',
+    formFieldText: '#4A1F22',
+    buttonEnabledBackground: '#7D1F26',
+    buttonEnabledText: '#FDECEC',
+    buttonDisabledBackground: '#E4B8B8',
+    buttonDisabledText: '#7D1F26',
+    buttonHoverBackground: '#6B1A1E',
+    buttonHoverText: '#FFFFFF',
+    spinnerColor: '#D46A6A',
+    pageBackground: '#141012',
+    errorColor: '#cc3333',
+    successColor: '#66cc99',
+    borderColor: '#6B1A1E'
+  },
+  'Light': {
+    headerBackground: '#ffffffff',
+    headerText: '#1F2937',
+    infoPanelBackground: '#FFFFFF',
+    infoPanelText: '#374151',
+    infoPanelHeading: '#374151',
+    infoPanelIcon: '#2563EB',
+    formPanelBackground: '#FFFFFF',
+    formPanelText: '#111827',
+    formFieldBorder: '#9CA3AF',
+    formFieldBackground: '#F1F5F9',
+    formFieldText: '#111827',
+    buttonEnabledBackground: '#2563EB',
+    buttonEnabledText: '#FFFFFF',
+    buttonDisabledBackground: '#E5E7EB',
+    buttonDisabledText: '#9CA3AF',
+    buttonHoverBackground: '#1D4ED8',
+    buttonHoverText: '#FFFFFF',
+    spinnerColor: '#2563EB',
+    pageBackground: '#EEF2F7',
+    errorColor: '#cc3333',
+    successColor: '#66cc99',
+    borderColor: '#CBD5E1'
+  },
+    'Dark': {
+    headerBackground: '#12161C',
+    headerText: '#E5E7EB',
+    infoPanelBackground: '#0F141A',
+    infoPanelText: '#CBD5E1',
+    infoPanelHeading: '#E2E8F0',
+    infoPanelIcon: '#94A3B8',
+    formPanelBackground: '#181E27',
+    formPanelText: '#E5E7EB',
+    formFieldBorder: '#9CA3AF',
+    formFieldBackground: '#E5E7EB',
+    formFieldText: '#111827',
+    buttonEnabledBackground: '#3B4250',
+    buttonEnabledText: '#F9FAFB',
+    buttonDisabledBackground: '#2A313C',
+    buttonDisabledText: '#9CA3AF',
+    buttonHoverBackground: '#4B5563',
+    buttonHoverText: '#FFFFFF',
+    spinnerColor: '#9CA3AF',
+    pageBackground: '#1b2029ff',
+    errorColor: '#cc3333',
+    successColor: '#66cc99',
+    borderColor: '#2A313C'
+  }
+};
+
+I will be using Github to Netlify with CI/CD integration.
+
+Server Side rendering is very important.
+
+I want to be able to start my local dev server using a single  command rather than switching between front end and back end commands.
+
+
+
+

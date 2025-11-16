@@ -1,0 +1,51 @@
+/* Global Styles */
+@import '@angular/material/prebuilt-themes/azure-blue.css';
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: var(--theme-page-background, #f5f5f5);
+  color: var(--theme-form-panel-text, #333);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Theme CSS Variables - Set by ThemeService dynamically */
+:root {
+  /* Default Light theme values */
+  --theme-header-background: #ffffffff;
+  --theme-header-text: #1F2937;
+  --theme-info-panel-background: #FFFFFF;
+  --theme-info-panel-text: #374151;
+  --theme-info-panel-heading: #374151;
+  --theme-info-panel-icon: #2563EB;
+  --theme-form-panel-background: #FFFFFF;
+  --theme-form-panel-text: #111827;
+  --theme-form-field-border: #9CA3AF;
+  --theme-form-field-background: #F1F5F9;
+  --theme-form-field-text: #111827;
+  --theme-button-enabled-background: #2563EB;
+  --theme-button-enabled-text: #FFFFFF;
+  --theme-button-disabled-background: #E5E7EB;
+  --theme-button-disabled-text: #9CA3AF;
+  --theme-button-hover-background: #1D4ED8;
+  --theme-button-hover-text: #FFFFFF;
+  --theme-spinner-color: #2563EB;
+  --theme-page-background: #EEF2F7;
+  --theme-error-color: #cc3333;
+  --theme-success-color: #66cc99;
+  --theme-border-color: #CBD5E1;
+}
+
+/* Material Design overrides */
+.mat-mdc-form-field {
+  width: 100%;
+}
+
+/* Import dialog styles */
+@import './styles/dialog-styles.scss';

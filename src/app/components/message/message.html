@@ -1,0 +1,7 @@
+<div [class]="type + '-card'">
+  <mat-icon [class]="type + '-icon'">
+    {{ type === 'success' ? 'check_circle' : 'error' }}
+  </mat-icon>
+  <h2>{{ title }}</h2>
+  <p>{{ message }}</p>
+</div>

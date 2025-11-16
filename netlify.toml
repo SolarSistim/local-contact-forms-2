@@ -1,0 +1,20 @@
+[build]
+  command = "npm run build"
+  publish = "dist/local-contact-forms-2/browser"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[dev]
+  command = "ng serve"
+  targetPort = 4200
+  port = 8888
+  publish = "dist/local-contact-forms-2/browser"
+  functions = "netlify/functions"
+  framework = "#custom"
+
+[build.environment]
+  NODE_VERSION = "20"

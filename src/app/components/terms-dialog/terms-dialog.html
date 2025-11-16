@@ -1,0 +1,52 @@
+<h2 mat-dialog-title>{{ data.title || 'Terms of Service' }}</h2>
+
+<mat-dialog-content class="app-dialog-content policy-dialog-panel">
+  <section class="app-dialog-section">
+    <p class="app-dialog-last-updated">
+      Last Updated: January 1, 2025
+    </p>
+
+    <h3>Terms of Service</h3>
+
+    <p>
+      These Terms of Service govern your use of LocalContactForms.com and the contact form services
+      provided to <strong>{{ data.clientName }}</strong>.
+    </p>
+
+    <h4>Acceptance of Terms</h4>
+    <p>
+      By using this contact form, you agree to these terms and conditions. If you do not agree,
+      please do not use this service.
+    </p>
+
+    <h4>Use of Service</h4>
+    <p>
+      This contact form is provided for legitimate business communication purposes only. You agree
+      not to use this service for spam, harassment, or any unlawful purposes.
+    </p>
+
+    <h4>Information Submission</h4>
+    <p>
+      By submitting information through this form, you consent to the collection and processing
+      of your data as described in our Privacy Policy.
+    </p>
+
+    <h4>Limitation of Liability</h4>
+    <p>
+      LocalContactForms.com provides this service "as is" without warranties of any kind. We are
+      not liable for any damages arising from the use of this service.
+    </p>
+  </section>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" style="padding-top: 15px;">
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="onAcknowledge()"
+    [class.bounce]="shouldBounce"
+  >
+    <mat-icon class="custom-mat-icon">check</mat-icon>
+    I have read this document
+  </button>
+</mat-dialog-actions>

@@ -1,0 +1,49 @@
+.error-card,
+.success-card {
+  text-align: center;
+  padding: 3rem 2rem;
+  border-radius: 8px;
+  margin: 2rem 0;
+  width: 100%;
+  max-width: 600px;
+}
+
+.error-card {
+  background-color: rgba(204, 51, 51, 0.1);
+  border: 1px solid rgba(204, 51, 51, 0.3);
+  color: var(--theme-error-color);
+
+  .error-icon {
+    color: var(--theme-error-color);
+    font-size: 3rem;
+    width: 3rem;
+    height: 3rem;
+    margin: 0 auto 1rem;
+    display: block;
+  }
+
+  h2 {
+    color: var(--theme-error-color);
+    margin-top: 0;
+  }
+}
+
+.success-card {
+  background-color: rgba(51, 204, 51, 0.1);
+  border: 1px solid rgba(51, 204, 51, 0.3);
+  color: var(--theme-success-color);
+
+  .success-icon {
+    color: var(--theme-success-color);
+    font-size: 3rem;
+    width: 3rem;
+    height: 3rem;
+    margin: 0 auto 1rem;
+    display: block;
+  }
+
+  h2 {
+    color: var(--theme-success-color);
+    margin-top: 0;
+  }
+}
