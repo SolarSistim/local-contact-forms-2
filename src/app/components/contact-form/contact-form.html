@@ -4,9 +4,9 @@
 
   <!-- Content - Only shown when NOT loading -->
   <div class="content-wrapper" *ngIf="!loading">
-    <!-- Error State -->
+    <!-- Error State - Only show after page is ready -->
     <app-message
-      *ngIf="error"
+      *ngIf="error && isReady"
       type="error"
       title="Unable to Load Form"
       [message]="error"

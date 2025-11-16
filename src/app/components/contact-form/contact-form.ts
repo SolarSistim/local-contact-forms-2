@@ -50,6 +50,7 @@ export class ContactForm implements OnInit, OnDestroy {
   contactForm!: FormGroup;
   tenantConfig: TenantConfig | null = null;
   loading = true;
+  isReady = false;
   submitting = false;
   success = false;
   error: string | null = null;
@@ -159,14 +160,25 @@ export class ContactForm implements OnInit, OnDestroy {
         // Hide loading so form can render
         this.loading = false;
 
-        // Initialize reCAPTCHA after form renders
+        // Mark as ready to show content (browser only)
         if (isPlatformBrowser(this.platformId)) {
-          setTimeout(() => this.initializeRecaptcha(), 100);
+          setTimeout(() => {
+            this.isReady = true;
+            this.initializeRecaptcha();
+          }, 100);
         }
       },
       error: (err) => {
-        this.error = err.message || 'Failed to load tenant configuration';
-        this.loading = false;
+        // Only show errors in browser after initial render
+        if (isPlatformBrowser(this.platformId)) {
+          setTimeout(() => {
+            this.error = err.message || 'Failed to load tenant configuration';
+            this.loading = false;
+            this.isReady = true;
+          }, 100);
+        } else {
+          this.loading = false;
+        }
       }
     });
   }
