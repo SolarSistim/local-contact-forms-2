@@ -1,23 +1,23 @@
-/**
- * Netlify-compatible server entry point for Angular SSR
- * This file is optimized for Netlify Edge Functions
- */
-import { AngularAppEngine } from '@angular/ssr';
-import { getContext } from '@netlify/angular-runtime';
+import { AngularAppEngine, createRequestHandler } from '@angular/ssr'
+import { getContext } from '@netlify/angular-runtime/context.mjs'
 
-const angularAppEngine = new AngularAppEngine();
+const angularAppEngine = new AngularAppEngine()
 
-/**
- * Request handler for Netlify Edge Functions
- */
-export default async function handler(request: Request): Promise<Response> {
-  const context = getContext();
+export async function netlifyAppEngineHandler(request: Request): Promise<Response> {
+  const context = getContext()
 
-  try {
-    const response = await angularAppEngine.handle(request, context);
-    return response || new Response('Not found', { status: 404 });
-  } catch (error) {
-    console.error('SSR error:', error);
-    return new Response('Internal server error', { status: 500 });
-  }
+  // Example API endpoints can be defined here.
+  // Uncomment and define endpoints as necessary.
+  // const pathname = new URL(request.url).pathname;
+  // if (pathname === '/api/hello') {
+  //   return Response.json({ message: 'Hello from the API' });
+  // }
+
+  const result = await angularAppEngine.handle(request, context)
+  return result || new Response('Not found', { status: 404 })
 }
+
+/**
+ * The request handler used by the Angular CLI (dev-server and during build).
+ */
+export const reqHandler = createRequestHandler(netlifyAppEngineHandler)
