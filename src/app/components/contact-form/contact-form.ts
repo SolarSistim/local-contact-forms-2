@@ -77,7 +77,7 @@ export class ContactForm implements OnInit, OnDestroy {
 
     if (snapshotId) {
       this.tenantId = snapshotId;
-      this.loadTenantConfig(this.tenantId);
+      this.loadTenantConfig(snapshotId);
     }
 
     // Also subscribe to handle dynamic parameter changes in browser
@@ -85,7 +85,7 @@ export class ContactForm implements OnInit, OnDestroy {
       const paramId = params['id'];
       if (paramId && paramId !== this.tenantId) {
         this.tenantId = paramId;
-        this.loadTenantConfig(this.tenantId);
+        this.loadTenantConfig(paramId);
       } else if (!paramId && !snapshotId) {
         this.error = 'No tenant ID provided. Please check your URL.';
         this.loading = false;
