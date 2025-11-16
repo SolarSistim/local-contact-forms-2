@@ -86,7 +86,8 @@ export class ContactForm implements OnInit, OnDestroy {
       if (paramId && paramId !== this.tenantId) {
         this.tenantId = paramId;
         this.loadTenantConfig(paramId);
-      } else if (!paramId && !snapshotId) {
+      } else if (!paramId && !snapshotId && !this.tenantConfig) {
+        // Only show error if no ID found and no config loaded
         this.error = 'No tenant ID provided. Please check your URL.';
         this.loading = false;
       }
@@ -155,16 +156,12 @@ export class ContactForm implements OnInit, OnDestroy {
         // Update meta tags for SEO
         this.updateMetaTags(config);
 
-        // Initialize reCAPTCHA before hiding loader
+        // Hide loading so form can render
+        this.loading = false;
+
+        // Initialize reCAPTCHA after form renders
         if (isPlatformBrowser(this.platformId)) {
-          setTimeout(() => {
-            this.initializeRecaptcha();
-            // Hide loading after reCAPTCHA is initialized
-            this.loading = false;
-          }, 100);
-        } else {
-          // SSR: hide loading immediately
-          this.loading = false;
+          setTimeout(() => this.initializeRecaptcha(), 100);
         }
       },
       error: (err) => {
@@ -181,31 +178,48 @@ export class ContactForm implements OnInit, OnDestroy {
   }
 
   private initializeRecaptcha(): void {
+    console.log('🔴 initializeRecaptcha called');
+    console.log('🔴 grecaptcha defined?', typeof grecaptcha !== 'undefined');
+    console.log('🔴 site key:', this.tenantConfig?.recaptcha_site_key);
+    console.log('🔴 element exists?', !!document.getElementById('recaptcha-element'));
+    console.log('🔴 widget already created?', this.recaptchaWidgetId);
+
     if (typeof grecaptcha === 'undefined') {
-      console.warn('reCAPTCHA not loaded yet');
+      console.warn('⚠️ reCAPTCHA not loaded yet, retrying...');
+      setTimeout(() => this.initializeRecaptcha(), 500);
       return;
     }
 
     if (!this.tenantConfig?.recaptcha_site_key) {
-      console.error('reCAPTCHA site key not available in config');
+      console.error('❌ reCAPTCHA site key not available in config');
       return;
     }
 
     const element = document.getElementById('recaptcha-element');
-    if (element && !this.recaptchaWidgetId) {
-      try {
-        this.recaptchaWidgetId = grecaptcha.render('recaptcha-element', {
-          sitekey: this.tenantConfig.recaptcha_site_key,
-          callback: (token: string) => {
-            this.contactForm.patchValue({ recaptchaToken: token });
-          },
-          'expired-callback': () => {
-            this.contactForm.patchValue({ recaptchaToken: '' });
-          }
-        });
-      } catch (e) {
-        console.error('Error initializing reCAPTCHA:', e);
-      }
+    if (!element) {
+      console.error('❌ reCAPTCHA element not found in DOM');
+      return;
+    }
+
+    if (this.recaptchaWidgetId) {
+      console.log('✅ reCAPTCHA already initialized');
+      return;
+    }
+
+    try {
+      console.log('🔵 Rendering reCAPTCHA...');
+      this.recaptchaWidgetId = grecaptcha.render('recaptcha-element', {
+        sitekey: this.tenantConfig.recaptcha_site_key,
+        callback: (token: string) => {
+          this.contactForm.patchValue({ recaptchaToken: token });
+        },
+        'expired-callback': () => {
+          this.contactForm.patchValue({ recaptchaToken: '' });
+        }
+      });
+      console.log('✅ reCAPTCHA rendered successfully!');
+    } catch (e) {
+      console.error('❌ Error initializing reCAPTCHA:', e);
     }
   }
 
