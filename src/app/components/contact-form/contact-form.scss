@@ -549,3 +549,11 @@
   position: relative;
   margin-right: 0px !important;
 }
+
+// Fix Material select dropdown font
+::ng-deep .mat-mdc-select,
+::ng-deep .mat-mdc-option,
+::ng-deep .mat-mdc-select-value,
+::ng-deep .mat-mdc-select-trigger {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif !important;
+}
