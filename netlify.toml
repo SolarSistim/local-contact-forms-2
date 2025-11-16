@@ -3,10 +3,6 @@
   publish = "dist/local-contact-forms-2/browser"
   functions = "netlify/functions"
 
-[[edge_functions]]
-  path = "/*"
-  function = "angular-ssr"
-
 [dev]
   command = "ng serve"
   targetPort = 4200
