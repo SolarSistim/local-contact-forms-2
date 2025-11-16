@@ -136,6 +136,9 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
       }
     });
 
+    // Add reCAPTCHA site key to config (public key, safe to expose)
+    config.recaptcha_site_key = process.env.RECAPTCHA_SITE_KEY || '';
+
     return {
       statusCode: 200,
       headers,

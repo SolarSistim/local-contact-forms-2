@@ -181,11 +181,16 @@ export class ContactForm implements OnInit, OnDestroy {
       return;
     }
 
+    if (!this.tenantConfig?.recaptcha_site_key) {
+      console.error('reCAPTCHA site key not available in config');
+      return;
+    }
+
     const element = document.getElementById('recaptcha-element');
     if (element && !this.recaptchaWidgetId) {
       try {
         this.recaptchaWidgetId = grecaptcha.render('recaptcha-element', {
-          sitekey: '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', // Test key - replace with your actual key
+          sitekey: this.tenantConfig.recaptcha_site_key,
           callback: (token: string) => {
             this.contactForm.patchValue({ recaptchaToken: token });
           },

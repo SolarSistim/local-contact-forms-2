@@ -19,6 +19,7 @@ export interface TenantConfig {
 
   // Form Configuration
   reason_for_contact: string; // Comma-separated values
+  recaptcha_site_key?: string; // reCAPTCHA public site key
 
   // Social Media URLs (all optional)
   facebook_url?: string;
