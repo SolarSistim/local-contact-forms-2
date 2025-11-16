@@ -71,16 +71,14 @@ export class ContactForm implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initializeForm();
 
-    // Get tenant ID from query parameters
-    this.route.queryParams.subscribe(params => {
-      this.tenantId = params['id'];
-      if (this.tenantId) {
-        this.loadTenantConfig(this.tenantId);
-      } else {
-        this.error = 'No tenant ID provided. Please check your URL.';
-        this.loading = false;
-      }
-    });
+    // Get tenant ID from query parameters - use snapshot for SSR compatibility
+    this.tenantId = this.route.snapshot.queryParams['id'];
+    if (this.tenantId) {
+      this.loadTenantConfig(this.tenantId);
+    } else {
+      this.error = 'No tenant ID provided. Please check your URL.';
+      this.loading = false;
+    }
   }
 
   ngOnDestroy(): void {
