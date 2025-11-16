@@ -19,9 +19,9 @@ import { ThemeService } from '../../services/theme.service';
 import { TenantConfig } from '../../models/tenant-config.model';
 import { Loader } from '../loader/loader';
 import { Message } from '../message/message';
-import { AdaDialog } from '../ada-dialog/ada-dialog';
-import { TermsDialog } from '../terms-dialog/terms-dialog';
-import { PrivacyDialog } from '../privacy-dialog/privacy-dialog';
+import { AdaDialog } from '../legal-stuff/ada-dialog/ada-dialog';
+import { TermsDialog } from '../legal-stuff/terms-dialog/terms-dialog';
+import { PrivacyDialog } from '../legal-stuff/privacy-dialog/privacy-dialog';
 
 declare const grecaptcha: any;
 
@@ -283,25 +283,32 @@ export class ContactForm implements OnInit, OnDestroy {
   }
 
   openPolicyDialog(type: 'ada' | 'terms' | 'privacy'): void {
-    const dialogConfig = {
-      width: '800px',
-      maxWidth: '95vw',
-      panelClass: 'policy-dialog-panel',
-      data: {
-        title: type === 'ada' ? 'ADA Statement' : type === 'terms' ? 'Terms of Service' : 'Privacy Policy',
-        clientName: this.tenantConfig?.business_name || 'our client'
-      }
-    };
-
-    let dialogComponent;
-    if (type === 'ada') {
-      dialogComponent = AdaDialog;
-    } else if (type === 'terms') {
-      dialogComponent = TermsDialog;
-    } else {
-      dialogComponent = PrivacyDialog;
+  const dialogConfig = {
+    width: '800px',
+    maxWidth: '95vw',
+    panelClass: 'policy-dialog-panel',
+    autoFocus: false, // 👈 add this
+    data: {
+      title:
+        type === 'ada'
+          ? 'ADA Statement'
+          : type === 'terms'
+          ? 'Terms of Service'
+          : 'Privacy Policy',
+      clientName: this.tenantConfig?.business_name || 'our client'
     }
+  };
 
-    this.dialog.open(dialogComponent, dialogConfig);
+  let dialogComponent;
+  if (type === 'ada') {
+    dialogComponent = AdaDialog;
+  } else if (type === 'terms') {
+    dialogComponent = TermsDialog;
+  } else {
+    dialogComponent = PrivacyDialog;
   }
+
+  this.dialog.open(dialogComponent, dialogConfig);
+}
+
 }
