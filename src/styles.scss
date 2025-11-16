@@ -9,10 +9,14 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: Arial, Helvetica, Verdana, sans-serif;
   background-color: var(--theme-page-background, #f5f5f5);
   color: var(--theme-form-panel-text, #333);
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+* {
+  font-family: Arial, Helvetica, Verdana, sans-serif;
 }
 
 /* Theme CSS Variables - Set by ThemeService dynamically */
