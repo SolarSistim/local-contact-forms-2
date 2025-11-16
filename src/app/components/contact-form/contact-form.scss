@@ -1,5 +1,6 @@
 .material-contact-form-container {
-  max-width: 1200px;
+  max-width: 1400px;
+  width: 95%;
   margin: 0 auto;
   padding: 1rem;
   color: var(--theme-form-panel-text);
@@ -11,6 +12,35 @@
   align-items: center;
   min-height: calc(100vh - 60px);
   box-sizing: border-box;
+
+  // Large Desktop (1920px and above)
+  @media (min-width: 1920px) {
+    max-width: 1600px;
+    width: 85%;
+  }
+
+  // Desktop (1200px - 1919px)
+  @media (min-width: 1200px) and (max-width: 1919px) {
+    max-width: 1400px;
+    width: 90%;
+  }
+
+  // Medium Desktop/Laptop (960px - 1199px)
+  @media (min-width: 960px) and (max-width: 1199px) {
+    width: 95%;
+  }
+
+  // Tablet (768px - 959px)
+  @media (min-width: 768px) and (max-width: 959px) {
+    width: 100%;
+    padding: 1rem 0.5rem;
+  }
+
+  // Mobile (below 768px)
+  @media (max-width: 767px) {
+    width: 100%;
+    padding: 0.5rem;
+  }
 
   .loading-card,
   .error-card,
@@ -50,9 +80,17 @@
   }
 }
 
+.content-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .parent-card-container {
   margin-top: 20px;
   margin-bottom: 55px;
+  width: 100%;
 }
 
 // Sticky Footer Styles

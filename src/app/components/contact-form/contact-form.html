@@ -2,24 +2,26 @@
   <!-- Loading State - Full Page Loader -->
   <app-loader *ngIf="loading" message="Loading contact form..."></app-loader>
 
-  <!-- Error State -->
-  <app-message
-    *ngIf="error && !loading"
-    type="error"
-    title="Unable to Load Form"
-    [message]="error"
-  ></app-message>
+  <!-- Content - Only shown when NOT loading -->
+  <div class="content-wrapper" *ngIf="!loading">
+    <!-- Error State -->
+    <app-message
+      *ngIf="error"
+      type="error"
+      title="Unable to Load Form"
+      [message]="error"
+    ></app-message>
 
-  <!-- Success State -->
-  <app-message
-    *ngIf="success && !loading"
-    type="success"
-    title="Message Sent!"
-    [message]="tenantConfig?.post_submit_message || 'Your message has been received.'"
-  ></app-message>
+    <!-- Success State -->
+    <app-message
+      *ngIf="success"
+      type="success"
+      title="Message Sent!"
+      [message]="tenantConfig?.post_submit_message || 'Your message has been received.'"
+    ></app-message>
 
-  <!-- Form State -->
-  <mat-card *ngIf="!loading && !success && tenantConfig" class="parent-card-container">
+    <!-- Form State -->
+    <mat-card *ngIf="!success && tenantConfig" class="parent-card-container">
     <!-- Title and Subtitle Section -->
     <mat-card-header class="header-section">
       <mat-card-title>{{ tenantConfig.business_name }}</mat-card-title>
@@ -296,6 +298,7 @@
       </div>
     </mat-card-content>
   </mat-card>
+  </div>
 </div>
 
 <!-- Sticky Footer -->
