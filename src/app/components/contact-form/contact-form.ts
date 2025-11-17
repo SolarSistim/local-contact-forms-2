@@ -85,16 +85,12 @@ export class ContactForm implements OnInit, OnDestroy {
         this.tenantId = paramId;
         this.loadTenantConfig(paramId);
       } else if (!paramId && !this.tenantConfig) {
-        // No ID and no config loaded yet
-        if (!snapshotId && isPlatformBrowser(this.platformId)) {
-          // Redirect to default tenant
+        // No ID and no config loaded yet - attempt redirect in browser
+        if (isPlatformBrowser(this.platformId)) {
           this.router.navigate(['/'], { queryParams: { id: 'local-contact-forms' } });
-        } else {
-          // Show error if we're not redirecting
-          this.error = 'No tenant ID provided. Please check your URL.';
-          this.loading = false;
-          this.isReady = true;
+          // Don't set error or stop loading - we're redirecting
         }
+        // If not in browser (SSR), just wait for browser to take over and redirect
       }
     });
 
@@ -163,9 +159,7 @@ export class ContactForm implements OnInit, OnDestroy {
         finalize(() => {
           // 🔧 ALWAYS run, success or error
           this.loading = false;
-          if (isPlatformBrowser(this.platformId)) {
-            this.isReady = true;
-          }
+          this.isReady = true;  // ✅ Always set isReady, regardless of platform
         })
       )
       .subscribe({
