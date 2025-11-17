@@ -48,6 +48,8 @@ declare const grecaptcha: any;
   styleUrl: './contact-form.scss',
 })
 export class ContactForm implements OnInit, OnDestroy {
+
+  isRoot!: boolean;
   contactForm!: FormGroup;
   tenantConfig: TenantConfig | null = null;
   loading = true;
@@ -71,35 +73,35 @@ export class ContactForm implements OnInit, OnDestroy {
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
-  ngOnInit(): void {
-    this.initializeForm();
+ngOnInit(): void {
+  // If no id in query params, redirect to default id
+  const idFromQuery = this.route.snapshot.queryParamMap.get('id');
 
-    // Get tenant ID from query parameters
-    const snapshotId = this.route.snapshot.queryParams['id'];
-
-    // Set up subscription FIRST before any redirects
-    // This ensures we catch parameter changes when redirecting
-    this.route.queryParams.subscribe(params => {
-      const paramId = params['id'];
-      if (paramId && paramId !== this.tenantId) {
-        this.tenantId = paramId;
-        this.loadTenantConfig(paramId);
-      } else if (!paramId && !this.tenantConfig) {
-        // No ID and no config loaded yet - attempt redirect in browser
-        if (isPlatformBrowser(this.platformId)) {
-          this.router.navigate(['/'], { queryParams: { id: 'local-contact-forms' } });
-          // Don't set error or stop loading - we're redirecting
-        }
-        // If not in browser (SSR), just wait for browser to take over and redirect
-      }
+  if (!idFromQuery) {
+    this.router.navigate([], {
+      queryParams: { id: 'local-contact-forms' },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
     });
-
-    // If we have an ID in the snapshot, load it immediately (for SSR)
-    if (snapshotId) {
-      this.tenantId = snapshotId;
-      this.loadTenantConfig(snapshotId);
-    }
+    return;
   }
+
+  this.initializeForm();
+
+  this.route.queryParams.subscribe(params => {
+    const hasQueryParams = Object.keys(params).length > 0;
+    this.isRoot = !hasQueryParams;
+    console.log('Is Root?', this.isRoot);
+
+    const paramId = params['id'];
+
+    if (paramId && paramId !== this.tenantId) {
+      this.tenantId = paramId;
+      this.loadTenantConfig(paramId);
+    }
+  });
+}
+
 
   ngOnDestroy(): void {
     // Clean up reCAPTCHA if it exists
@@ -157,9 +159,9 @@ export class ContactForm implements OnInit, OnDestroy {
     this.tenantConfigService.getTenantConfig(tenantId)
       .pipe(
         finalize(() => {
-          // 🔧 ALWAYS run, success or error
+          // ALWAYS run, success or error
           this.loading = false;
-          this.isReady = true;  // ✅ Always set isReady, regardless of platform
+          this.isReady = true;
         })
       )
       .subscribe({
