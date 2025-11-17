@@ -37,7 +37,8 @@ export const routes: Routes = [
   },
   {
     path: 'contact/:id',
-    component: ContactForm
+    component: ContactForm,
+    data: { prerender: false }
   },
   {
     path: 'home',
