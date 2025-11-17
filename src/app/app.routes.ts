@@ -19,8 +19,8 @@ export class RouteResolverComponent implements OnInit {
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
       if (params['id']) {
-        // Has id parameter, navigate to contact form with params
-        this.router.navigate(['/contact-form'], { queryParams: params });
+        // Has id parameter, navigate to contact with id as route param
+        this.router.navigate(['/contact', params['id']]);
       } else {
         // No id parameter, go to home
         this.router.navigate(['/home']);
@@ -36,7 +36,7 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
   {
-    path: 'contact-form',
+    path: 'contact/:id',
     component: ContactForm
   },
   {
