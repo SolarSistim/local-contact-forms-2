@@ -19,8 +19,14 @@ export default async (request: Request, context: Context) => {
   }
 
   // Get the tenant ID from query parameters
-  const url = new URL(request.url);
-  const tenantId = url.searchParams.get("id");
+const url = new URL(request.url);
+  const pathParts = url.pathname.split('/').filter(part => part.length > 0);
+  
+  // Check if this is a contact route with an ID
+  let tenantId: string | null = null;
+  if (pathParts.length >= 2 && pathParts[0] === 'contact') {
+    tenantId = pathParts[1];
+  }
 
   // If no tenant ID, return original response
   if (!tenantId) {
