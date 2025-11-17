@@ -270,51 +270,57 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
     ];
 
     console.log('Inserting submission row at top of sheet:', submissionsSheetId);
-    // First, get the spreadsheet to find the sheet ID
-    const spreadsheet = await sheets.spreadsheets.get({
-      spreadsheetId: submissionsSheetId,
-    });
+// First, get the spreadsheet to find the sheet ID
+const spreadsheet = await sheets.spreadsheets.get({
+  spreadsheetId: submissionsSheetId,
+});
 
-    // Find the submissions sheet ID (not the spreadsheet ID)
-    const submissionsSheet = spreadsheet.data.sheets?.find(
-      sheet => sheet.properties?.title === 'submissions'
-    );
+// Log all sheet names for debugging
+const sheetNames = spreadsheet.data.sheets?.map(s => s.properties?.title) || [];
+console.log('Available sheets in spreadsheet:', sheetNames);
 
-    if (!submissionsSheet?.properties?.sheetId) {
-      throw new Error('Could not find submissions sheet');
-    }
+// Find the submissions sheet ID (not the spreadsheet ID) - case insensitive
+const submissionsSheet = spreadsheet.data.sheets?.find(
+  sheet => sheet.properties?.title?.toLowerCase() === 'submissions'
+);
 
-    const sheetId = submissionsSheet.properties.sheetId;
+if (!submissionsSheet?.properties?.sheetId) {
+  console.error('Could not find submissions sheet. Available sheets:', sheetNames);
+  throw new Error('Could not find submissions sheet');
+}
 
-    // Insert a new row at position 1 (right after the header row at position 0)
-    await sheets.spreadsheets.batchUpdate({
-      spreadsheetId: submissionsSheetId,
-      requestBody: {
-        requests: [
-          {
-            insertDimension: {
-              range: {
-                sheetId: sheetId,
-                dimension: 'ROWS',
-                startIndex: 1,
-                endIndex: 2,
-              },
-            },
+const sheetId = submissionsSheet.properties.sheetId;
+console.log('Found submissions sheet with ID:', sheetId);
+
+// Insert a new row at position 1 (right after the header row at position 0)
+await sheets.spreadsheets.batchUpdate({
+  spreadsheetId: submissionsSheetId,
+  requestBody: {
+    requests: [
+      {
+        insertDimension: {
+          range: {
+            sheetId: sheetId,
+            dimension: 'ROWS',
+            startIndex: 1,
+            endIndex: 2,
           },
-        ],
+        },
       },
-    });
+    ],
+  },
+});
 
-    // Now write the data to row 2 (index 1, right after header)
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: submissionsSheetId,
-      range: 'submissions!A2:G2',
-      valueInputOption: 'USER_ENTERED',
-      requestBody: {
-        values: [rowData],
-      },
-    });
-    console.log('Submission inserted at top successfully');
+// Now write the data to row 2 (index 1, right after header)
+await sheets.spreadsheets.values.update({
+  spreadsheetId: submissionsSheetId,
+  range: 'submissions!A2:G2',
+  valueInputOption: 'USER_ENTERED',
+  requestBody: {
+    values: [rowData],
+  },
+});
+console.log('Submission inserted at top successfully');
 
     // ---- Send email notification via Gmail (best-effort) ----
     if (notifyEmail && process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
