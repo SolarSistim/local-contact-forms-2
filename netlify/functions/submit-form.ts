@@ -240,8 +240,27 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
     console.log('GMAIL_APP_PASSWORD set:', !!process.env.GMAIL_APP_PASSWORD);
 
     // ---- Append submission to Google Sheet ----
-    const timestamp = new Date().toLocaleString();
+    const timestamp = new Date().toLocaleString('en-US', {
+      timeZone: 'America/Chicago',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+
+    const now = new Date();
+    const januaryOffset = new Date(now.getFullYear(), 0, 1).getTimezoneOffset();
+    const julyOffset = new Date(now.getFullYear(), 6, 1).getTimezoneOffset();
+    const isDST = Math.max(januaryOffset, julyOffset) !== now.getTimezoneOffset();
+    const tzAbbreviation = isDST ? 'CDT' : 'CST';
+
+    const timestampWithTZ = `${timestamp} ${tzAbbreviation}`;
+    
     const rowData = [
+      timestampWithTZ,
       timestamp,
       formData.firstName,
       formData.lastName,
@@ -274,7 +293,7 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #2563EB;">New Contact Form Submission</h2>
               <p><strong>Business:</strong> ${businessName || 'N/A'}</p>
-              <p><strong>Received:</strong> ${timestamp}</p>
+              <p><strong>Received:</strong> ${timestampWithTZ}</p>
 
               <hr style="border: 1px solid #e5e7eb; margin: 20px 0;">
 
