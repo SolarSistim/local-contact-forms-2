@@ -133,6 +133,11 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
     const notifyEmail = config.notify_on_submit;
     const businessName = config.business_name;
 
+    // Debug logging
+    console.log('notifyEmail:', notifyEmail);
+    console.log('GMAIL_USER:', process.env.GMAIL_USER);
+    console.log('GMAIL_APP_PASSWORD exists:', !!process.env.GMAIL_APP_PASSWORD);
+
     // Append submission to Google Sheet
     const timestamp = new Date().toLocaleString();
     const rowData = [
