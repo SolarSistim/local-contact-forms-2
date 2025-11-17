@@ -34,11 +34,29 @@ export default async (request: Request, context: Context) => {
 
     if (!configResponse.ok) {
       console.error('Failed to fetch tenant config:', configResponse.status);
+      const errorText = await configResponse.text();
+      console.error('Error response:', errorText);
       return response;
     }
 
-    const tenantConfig: TenantConfig = await configResponse.json();
-    console.log('Tenant config loaded:', tenantConfig.business_name);
+    const responseData = await configResponse.json();
+    console.log('Response data received:', JSON.stringify(responseData));
+
+    // The backend wraps the config in a 'config' property
+    const tenantConfig: TenantConfig = responseData.config;
+
+    if (!tenantConfig) {
+      console.error('No config found in response');
+      return response;
+    }
+
+    console.log('Business name:', tenantConfig.business_name);
+
+    // Validate that we have the required fields
+    if (!tenantConfig.business_name || !tenantConfig.meta_description) {
+      console.error('Tenant config missing required fields');
+      return response;
+    }
 
     // Get the HTML text
     const html = await response.text();
@@ -94,7 +112,8 @@ export default async (request: Request, context: Context) => {
 };
 
 // Helper function to escape HTML special characters
-function escapeHtml(text: string): string {
+function escapeHtml(text: string | undefined): string {
+  if (!text) return '';
   const map: { [key: string]: string } = {
     '&': '&amp;',
     '<': '&lt;',
