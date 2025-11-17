@@ -101,7 +101,7 @@
                   content_copy
                 </mat-icon>
               </div>
-              <p><a [href]="tenantConfig.business_web_url" target="_blank" rel="noopener noreferrer">{{ tenantConfig.business_web_url }}</a></p>
+              <p><a [href]="ensureHttps(tenantConfig.business_web_url)" target="_blank" rel="noopener noreferrer">{{ tenantConfig.business_web_url }}</a></p>
             </div>
           </div>
 
@@ -110,31 +110,31 @@
             <div>
               <strong>Follow Us</strong>
               <div class="social-links">
-                <a *ngIf="tenantConfig?.facebook_url" [href]="tenantConfig.facebook_url" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on Facebook" matTooltipPosition="above">
+                <a *ngIf="tenantConfig?.facebook_url" [href]="ensureHttps(tenantConfig.facebook_url)" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on Facebook" matTooltipPosition="above">
                   <img src="/icons/icons8-facebook-50.png" alt="Facebook">
                 </a>
-                <a *ngIf="tenantConfig?.instagram_url" [href]="tenantConfig.instagram_url" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on Instagram" matTooltipPosition="above">
+                <a *ngIf="tenantConfig?.instagram_url" [href]="ensureHttps(tenantConfig.instagram_url)" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on Instagram" matTooltipPosition="above">
                   <img src="/icons/icons8-instagram-50.png" alt="Instagram">
                 </a>
-                <a *ngIf="tenantConfig?.linkedin_url" [href]="tenantConfig.linkedin_url" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on LinkedIn" matTooltipPosition="above">
+                <a *ngIf="tenantConfig?.linkedin_url" [href]="ensureHttps(tenantConfig.linkedin_url)" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on LinkedIn" matTooltipPosition="above">
                   <img src="/icons/icons8-linkedin-circled-50.png" alt="LinkedIn">
                 </a>
-                <a *ngIf="tenantConfig?.pinterest_url" [href]="tenantConfig.pinterest_url" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on Pinterest" matTooltipPosition="above">
+                <a *ngIf="tenantConfig?.pinterest_url" [href]="ensureHttps(tenantConfig.pinterest_url)" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on Pinterest" matTooltipPosition="above">
                   <img src="/icons/icons8-pinterest-50.png" alt="Pinterest">
                 </a>
-                <a *ngIf="tenantConfig?.reddit_url" [href]="tenantConfig.reddit_url" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on Reddit" matTooltipPosition="above">
+                <a *ngIf="tenantConfig?.reddit_url" [href]="ensureHttps(tenantConfig.reddit_url)" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on Reddit" matTooltipPosition="above">
                   <img src="/icons/icons8-reddit-50.png" alt="Reddit">
                 </a>
-                <a *ngIf="tenantConfig?.tiktok_url" [href]="tenantConfig.tiktok_url" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on TikTok" matTooltipPosition="above">
+                <a *ngIf="tenantConfig?.tiktok_url" [href]="ensureHttps(tenantConfig.tiktok_url)" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on TikTok" matTooltipPosition="above">
                   <img src="/icons/icons8-tiktok-50.png" alt="TikTok">
                 </a>
-                <a *ngIf="tenantConfig?.wechat_url" [href]="tenantConfig.wechat_url" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on WeChat" matTooltipPosition="above">
+                <a *ngIf="tenantConfig?.wechat_url" [href]="ensureHttps(tenantConfig.wechat_url)" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on WeChat" matTooltipPosition="above">
                   <img src="/icons/icons8-wechat-50.png" alt="WeChat">
                 </a>
-                <a *ngIf="tenantConfig?.x_url" [href]="tenantConfig.x_url" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on X" matTooltipPosition="above">
+                <a *ngIf="tenantConfig?.x_url" [href]="ensureHttps(tenantConfig.x_url)" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on X" matTooltipPosition="above">
                   <img src="/icons/icons8-x-50.png" alt="X">
                 </a>
-                <a *ngIf="tenantConfig?.youtube_url" [href]="tenantConfig.youtube_url" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on YouTube" matTooltipPosition="above">
+                <a *ngIf="tenantConfig?.youtube_url" [href]="ensureHttps(tenantConfig.youtube_url)" target="_blank" rel="noopener noreferrer" matTooltip="Visit us on YouTube" matTooltipPosition="above">
                   <img src="/icons/icons8-youtube-50.png" alt="YouTube">
                 </a>
               </div>

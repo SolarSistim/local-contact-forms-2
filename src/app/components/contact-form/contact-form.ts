@@ -328,6 +328,26 @@ export class ContactForm implements OnInit, OnDestroy {
     );
   }
 
+  ensureHttps(url: string | undefined): string {
+    if (!url) return '';
+
+    // Trim whitespace
+    url = url.trim();
+
+    // Already has https://
+    if (url.startsWith('https://')) {
+      return url;
+    }
+
+    // Has http://, replace with https://
+    if (url.startsWith('http://')) {
+      return url.replace('http://', 'https://');
+    }
+
+    // Starts with www. or just domain name
+    return 'https://' + url;
+  }
+
   openPolicyDialog(type: 'ada' | 'terms' | 'privacy'): void {
   const dialogConfig = {
     width: '800px',
