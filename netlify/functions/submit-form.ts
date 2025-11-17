@@ -284,12 +284,13 @@ const submissionsSheet = spreadsheet.data.sheets?.find(
   sheet => sheet.properties?.title?.toLowerCase() === 'submissions'
 );
 
-if (!submissionsSheet?.properties?.sheetId) {
+if (!submissionsSheet?.properties || submissionsSheet.properties.sheetId === undefined) {
   console.error('Could not find submissions sheet. Available sheets:', sheetNames);
   throw new Error('Could not find submissions sheet');
 }
 
 const sheetId = submissionsSheet.properties.sheetId;
+
 console.log('Found submissions sheet with ID:', sheetId);
 
 // Insert a new row at position 1 (right after the header row at position 0)
