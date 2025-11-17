@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, PLATFORM_ID, Inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -22,6 +22,7 @@ import { Message } from '../message/message';
 import { AdaDialog } from '../legal-stuff/ada-dialog/ada-dialog';
 import { TermsDialog } from '../legal-stuff/terms-dialog/terms-dialog';
 import { PrivacyDialog } from '../legal-stuff/privacy-dialog/privacy-dialog';
+import { finalize } from 'rxjs/operators'; // 🔧 NEW
 
 declare const grecaptcha: any;
 
@@ -61,6 +62,7 @@ export class ContactForm implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
+    private router: Router,
     private tenantConfigService: TenantConfigService,
     private themeService: ThemeService,
     private dialog: MatDialog,
@@ -73,26 +75,34 @@ export class ContactForm implements OnInit, OnDestroy {
     this.initializeForm();
 
     // Get tenant ID from query parameters
-    // Try snapshot first for SSR, then subscribe for dynamic updates
     const snapshotId = this.route.snapshot.queryParams['id'];
 
-    if (snapshotId) {
-      this.tenantId = snapshotId;
-      this.loadTenantConfig(snapshotId);
-    }
-
-    // Also subscribe to handle dynamic parameter changes in browser
+    // Set up subscription FIRST before any redirects
+    // This ensures we catch parameter changes when redirecting
     this.route.queryParams.subscribe(params => {
       const paramId = params['id'];
       if (paramId && paramId !== this.tenantId) {
         this.tenantId = paramId;
         this.loadTenantConfig(paramId);
-      } else if (!paramId && !snapshotId && !this.tenantConfig) {
-        // Only show error if no ID found and no config loaded
-        this.error = 'No tenant ID provided. Please check your URL.';
-        this.loading = false;
+      } else if (!paramId && !this.tenantConfig) {
+        // No ID and no config loaded yet
+        if (!snapshotId && isPlatformBrowser(this.platformId)) {
+          // Redirect to default tenant
+          this.router.navigate(['/'], { queryParams: { id: 'local-contact-forms' } });
+        } else {
+          // Show error if we're not redirecting
+          this.error = 'No tenant ID provided. Please check your URL.';
+          this.loading = false;
+          this.isReady = true;
+        }
       }
     });
+
+    // If we have an ID in the snapshot, load it immediately (for SSR)
+    if (snapshotId) {
+      this.tenantId = snapshotId;
+      this.loadTenantConfig(snapshotId);
+    }
   }
 
   ngOnDestroy(): void {
@@ -145,42 +155,43 @@ export class ContactForm implements OnInit, OnDestroy {
 
   private loadTenantConfig(tenantId: string): void {
     this.loading = true;
-    this.error = ''; // Clear any previous errors
-    this.tenantConfigService.getTenantConfig(tenantId).subscribe({
-      next: (config) => {
-        this.tenantConfig = config;
-        this.reasonOptions = config.reason_for_contact.split(',').map(r => r.trim());
+    this.isReady = false;   // 🔧 reset ready flag
+    this.error = null;      // 🔧 clear any previous errors
 
-        // Apply theme
-        this.themeService.applyTheme(config.theme as any);
-
-        // Update meta tags for SEO
-        this.updateMetaTags(config);
-
-        // Hide loading so form can render
-        this.loading = false;
-
-        // Mark as ready to show content (browser only)
-        if (isPlatformBrowser(this.platformId)) {
-          setTimeout(() => {
-            this.isReady = true;
-            this.initializeRecaptcha();
-          }, 100);
-        }
-      },
-      error: (err) => {
-        // Only show errors in browser after initial render
-        if (isPlatformBrowser(this.platformId)) {
-          setTimeout(() => {
-            this.error = err.message || 'Failed to load tenant configuration';
-            this.loading = false;
-            this.isReady = true;
-          }, 100);
-        } else {
+    this.tenantConfigService.getTenantConfig(tenantId)
+      .pipe(
+        finalize(() => {
+          // 🔧 ALWAYS run, success or error
           this.loading = false;
+          if (isPlatformBrowser(this.platformId)) {
+            this.isReady = true;
+          }
+        })
+      )
+      .subscribe({
+        next: (config) => {
+          this.tenantConfig = config;
+          this.reasonOptions = config.reason_for_contact.split(',').map(r => r.trim());
+
+          // Apply theme
+          this.themeService.applyTheme(config.theme as any);
+
+          // Update meta tags for SEO
+          this.updateMetaTags(config);
+
+          // Initialize reCAPTCHA after view is ready (browser only)
+          if (isPlatformBrowser(this.platformId)) {
+            setTimeout(() => {
+              this.initializeRecaptcha();
+            }, 100);
+          }
+        },
+        error: (err) => {
+          console.error('Failed to load tenant configuration', err);
+          this.tenantConfig = null;
+          this.error = err?.message || 'Failed to load tenant configuration';
         }
-      }
-    });
+      });
   }
 
   private updateMetaTags(config: TenantConfig): void {
@@ -349,32 +360,31 @@ export class ContactForm implements OnInit, OnDestroy {
   }
 
   openPolicyDialog(type: 'ada' | 'terms' | 'privacy'): void {
-  const dialogConfig = {
-    width: '800px',
-    maxWidth: '95vw',
-    panelClass: 'policy-dialog-panel',
-    autoFocus: false, // 👈 add this
-    data: {
-      title:
-        type === 'ada'
-          ? 'ADA Statement'
-          : type === 'terms'
-          ? 'Terms of Service'
-          : 'Privacy Policy',
-      clientName: this.tenantConfig?.business_name || 'our client'
+    const dialogConfig = {
+      width: '800px',
+      maxWidth: '95vw',
+      panelClass: 'policy-dialog-panel',
+      autoFocus: false,
+      data: {
+        title:
+          type === 'ada'
+            ? 'ADA Statement'
+            : type === 'terms'
+            ? 'Terms of Service'
+            : 'Privacy Policy',
+        clientName: this.tenantConfig?.business_name || 'our client'
+      }
+    };
+
+    let dialogComponent;
+    if (type === 'ada') {
+      dialogComponent = AdaDialog;
+    } else if (type === 'terms') {
+      dialogComponent = TermsDialog;
+    } else {
+      dialogComponent = PrivacyDialog;
     }
-  };
 
-  let dialogComponent;
-  if (type === 'ada') {
-    dialogComponent = AdaDialog;
-  } else if (type === 'terms') {
-    dialogComponent = TermsDialog;
-  } else {
-    dialogComponent = PrivacyDialog;
+    this.dialog.open(dialogComponent, dialogConfig);
   }
-
-  this.dialog.open(dialogComponent, dialogConfig);
-}
-
 }

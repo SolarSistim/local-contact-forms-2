@@ -8,7 +8,7 @@ dotenv.config();
 
 const sheets = google.sheets('v4');
 
-// Configure nodemailer with Gmail
+// Configure nodemailer with Gmail (we'll guard usage later)
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -29,7 +29,6 @@ interface FormSubmission {
 }
 
 const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
-  // CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -49,11 +48,38 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
     };
   }
 
+  // Basic sanity log
+  console.log('Incoming request to contact-form function');
+
   try {
-    const formData: FormSubmission = JSON.parse(event.body || '{}');
+    // ---- Parse and validate body ----
+    let formData: FormSubmission;
+    try {
+      formData = JSON.parse(event.body || '{}');
+    } catch (parseError: any) {
+      console.error('Failed to parse request body as JSON:', parseError);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Invalid JSON in request body' }),
+      };
+    }
+
+    console.log('Parsed formData:', {
+      tenantId: formData.tenantId,
+      email: formData.email,
+      hasRecaptcha: !!formData.recaptchaToken,
+    });
 
     // Validate required fields
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.tenantId) {
+    if (
+      !formData.firstName ||
+      !formData.lastName ||
+      !formData.email ||
+      !formData.phone ||
+      !formData.tenantId
+    ) {
+      console.warn('Missing required fields in form submission');
       return {
         statusCode: 400,
         headers,
@@ -61,15 +87,37 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
       };
     }
 
-    // Verify reCAPTCHA
+    // ---- Verify reCAPTCHA (if provided) ----
     if (formData.recaptchaToken) {
+      if (!process.env.RECAPTCHA_SECRET_KEY) {
+        console.error('RECAPTCHA_SECRET_KEY is not set but recaptchaToken was provided');
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ error: 'Server misconfigured: reCAPTCHA secret missing' }),
+        };
+      }
+
+      console.log('Verifying reCAPTCHA...');
       const recaptchaResponse = await fetch('https://www.google.com/recaptcha/api/siteverify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: `secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${formData.recaptchaToken}`,
       });
 
+      console.log('reCAPTCHA response status:', recaptchaResponse.status);
+
+      if (!recaptchaResponse.ok) {
+        console.error('reCAPTCHA verification HTTP error:', recaptchaResponse.status);
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ error: 'Error verifying reCAPTCHA' }),
+        };
+      }
+
       const recaptchaResult = await recaptchaResponse.json();
+      console.log('reCAPTCHA result:', recaptchaResult);
 
       if (!recaptchaResult.success) {
         return {
@@ -80,30 +128,64 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
       }
     }
 
-    // Initialize Google Sheets API
+    // ---- Initialize Google Sheets API ----
+    const serviceAccountKeyEnv = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+    if (!serviceAccountKeyEnv) {
+      console.error('GOOGLE_SERVICE_ACCOUNT_KEY is not set');
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ error: 'Server misconfigured: missing Google service account key' }),
+      };
+    }
+
+    let serviceAccountCredentials: any;
+    try {
+      serviceAccountCredentials = JSON.parse(serviceAccountKeyEnv);
+    } catch (parseError: any) {
+      console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT_KEY JSON:', parseError);
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ error: 'Server misconfigured: invalid Google service account key' }),
+      };
+    }
+
+    console.log('Initializing GoogleAuth...');
     const auth = new google.auth.GoogleAuth({
-      credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY || '{}'),
+      credentials: serviceAccountCredentials,
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
 
+    console.log('Getting Google auth client...');
     const authClient = await auth.getClient();
+    console.log('Google auth client obtained');
     google.options({ auth: authClient as any });
 
-    // Get global config to find submission sheet ID
+    // ---- Get global config to find submission sheet ID ----
     const globalConfigSheetId = process.env.GLOBAL_CONFIG_SHEET_ID;
     if (!globalConfigSheetId) {
-      throw new Error('Global config sheet ID not configured');
+      console.error('GLOBAL_CONFIG_SHEET_ID is not configured');
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ error: 'Server misconfigured: global config sheet ID missing' }),
+      };
     }
 
+    console.log('Fetching global config from sheet:', globalConfigSheetId);
     const globalConfigResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: globalConfigSheetId,
       range: 'tenants_master_sheet!A2:L1000',
     });
 
     const globalRows = globalConfigResponse.data.values || [];
-    const tenantRow = globalRows.find(row => row[0] === formData.tenantId);
+    console.log('Global config rows length:', globalRows.length);
+
+    const tenantRow = globalRows.find((row) => row[0] === formData.tenantId);
 
     if (!tenantRow) {
+      console.warn('Tenant not found for tenantId:', formData.tenantId);
       return {
         statusCode: 404,
         headers,
@@ -111,17 +193,32 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
       };
     }
 
-    const submissionsSheetId = tenantRow[4]; // submissions_sheet_id column
     const configSheetId = tenantRow[3]; // config_sheet_id column
+    const submissionsSheetId = tenantRow[4]; // submissions_sheet_id column
 
-    // Fetch tenant config to get notify_submit and business_name
+    if (!configSheetId || !submissionsSheetId) {
+      console.error('Missing configSheetId or submissionsSheetId for tenant:', formData.tenantId, {
+        configSheetId,
+        submissionsSheetId,
+      });
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({
+          error: 'Server misconfigured: tenant sheet IDs missing',
+        }),
+      };
+    }
+
+    // ---- Fetch tenant config to get notify_submit and business_name ----
+    console.log('Fetching tenant config from sheet:', configSheetId);
     const configResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: configSheetId,
       range: 'config!A2:B100',
     });
 
     const configRows = configResponse.data.values || [];
-    const config: any = {};
+    const config: Record<string, string> = {};
     configRows.forEach((row: string[]) => {
       const key = row[0];
       const value = row[1];
@@ -133,12 +230,16 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
     const notifyEmail = config.notify_on_submit;
     const businessName = config.business_name;
 
-    // Debug logging
-    console.log('notifyEmail:', notifyEmail);
-    console.log('GMAIL_USER:', process.env.GMAIL_USER);
-    console.log('GMAIL_APP_PASSWORD exists:', !!process.env.GMAIL_APP_PASSWORD);
+    console.log('Tenant config loaded:', {
+      notifyEmail,
+      businessName,
+    });
 
-    // Append submission to Google Sheet
+    // Debug logging of mail env
+    console.log('GMAIL_USER set:', !!process.env.GMAIL_USER);
+    console.log('GMAIL_APP_PASSWORD set:', !!process.env.GMAIL_APP_PASSWORD);
+
+    // ---- Append submission to Google Sheet ----
     const timestamp = new Date().toLocaleString();
     const rowData = [
       timestamp,
@@ -150,6 +251,7 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
       formData.message,
     ];
 
+    console.log('Appending submission row to sheet:', submissionsSheetId);
     await sheets.spreadsheets.values.append({
       spreadsheetId: submissionsSheetId,
       range: 'submissions!A:G',
@@ -158,10 +260,12 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
         values: [rowData],
       },
     });
+    console.log('Submission appended successfully');
 
-    // Send email notification via Gmail
-    if (notifyEmail && process.env.GMAIL_USER) {
+    // ---- Send email notification via Gmail (best-effort) ----
+    if (notifyEmail && process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
       try {
+        console.log('Sending notification email to:', notifyEmail);
         await transporter.sendMail({
           from: `"Local Contact Forms" <${process.env.GMAIL_USER}>`,
           to: notifyEmail,
@@ -212,9 +316,15 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
         // Don't fail the entire submission if email fails
       }
     } else {
-      console.warn('Email notification skipped - missing notifyEmail or Gmail credentials');
+      console.warn('Email notification skipped - missing notifyEmail or Gmail credentials', {
+        notifyEmail,
+        hasGmailUser: !!process.env.GMAIL_USER,
+        hasGmailPassword: !!process.env.GMAIL_APP_PASSWORD,
+      });
     }
 
+    // ---- Success response ----
+    console.log('Form submission completed successfully');
     return {
       statusCode: 200,
       headers,
