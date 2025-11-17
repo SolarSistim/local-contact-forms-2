@@ -80,6 +80,7 @@ export default async (request: Request, context: Context) => {
     const ogTags = `
   <meta property="og:title" content="${escapeHtml(tenantConfig.business_name)}">
   <meta property="og:description" content="${escapeHtml(tenantConfig.meta_description)}">
+  <meta property="og:site_name" content="${escapeHtml(tenantConfig.business_name)}">
   <meta property="og:type" content="website">
   <meta property="og:url" content="${url.toString()}">
 
