@@ -102,7 +102,6 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
     }
 
     const submissionsSheetId = tenantRow[4]; // submissions_sheet_id column
-    const notifyEmail = tenantRow[7]; // owner_email column
 
     // Append submission to Google Sheet
     const timestamp = new Date().toLocaleString();
@@ -125,9 +124,7 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
       },
     });
 
-    // Send email notification (using Netlify's built-in email or external service)
-    // Note: You'll need to implement email sending here
-    // For example, using SendGrid, Mailgun, or Netlify's email service
+    // Note: Email notifications can be added here if needed
 
     return {
       statusCode: 200,
