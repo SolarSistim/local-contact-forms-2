@@ -17,12 +17,12 @@ import { Meta, Title } from '@angular/platform-browser';
 import { TenantConfigService } from '../../services/tenant-config.service';
 import { ThemeService } from '../../services/theme.service';
 import { TenantConfig } from '../../models/tenant-config.model';
-import { Loader } from '../loader/loader';
-import { Message } from '../message/message';
-import { AdaDialog } from '../legal-stuff/ada-dialog/ada-dialog';
-import { TermsDialog } from '../legal-stuff/terms-dialog/terms-dialog';
-import { PrivacyDialog } from '../legal-stuff/privacy-dialog/privacy-dialog';
-import { finalize } from 'rxjs/operators'; // 🔧 NEW
+import { Loader } from './loader/loader';
+import { Message } from './message/message';
+import { AdaDialog } from './legal-stuff/ada-dialog/ada-dialog';
+import { TermsDialog } from './legal-stuff/terms-dialog/terms-dialog';
+import { PrivacyDialog } from './legal-stuff/privacy-dialog/privacy-dialog';
+import { finalize } from 'rxjs/operators';
 
 declare const grecaptcha: any;
 
