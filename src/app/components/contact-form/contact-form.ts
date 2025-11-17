@@ -74,24 +74,11 @@ export class ContactForm implements OnInit, OnDestroy {
   ) {}
 
 ngOnInit(): void {
-  // If no id in query params, redirect to default id
-  const idFromQuery = this.route.snapshot.queryParamMap.get('id');
-
-  if (!idFromQuery) {
-    this.router.navigate([], {
-      queryParams: { id: 'local-contact-forms' },
-      queryParamsHandling: 'merge',
-      replaceUrl: true
-    });
-    return;
-  }
-
   this.initializeForm();
 
   this.route.queryParams.subscribe(params => {
     const hasQueryParams = Object.keys(params).length > 0;
     this.isRoot = !hasQueryParams;
-    console.log('Is Root?', this.isRoot);
 
     const paramId = params['id'];
 
