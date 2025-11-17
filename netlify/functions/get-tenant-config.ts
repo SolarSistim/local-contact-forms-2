@@ -56,13 +56,14 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
   }
 
   try {
-    const tenantId = event.queryStringParameters?.tenantId;
+    // Accept both 'id' and 'tenantId' for backwards compatibility
+    const tenantId = event.queryStringParameters?.id || event.queryStringParameters?.tenantId;
 
     if (!tenantId) {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Tenant ID is required' }),
+        body: JSON.stringify({ error: 'Tenant ID is required (use ?id=xxx or ?tenantId=xxx)' }),
       };
     }
 
