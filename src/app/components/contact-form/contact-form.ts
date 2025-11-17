@@ -77,9 +77,6 @@ ngOnInit(): void {
   this.initializeForm();
 
   this.route.queryParams.subscribe(params => {
-    const hasQueryParams = Object.keys(params).length > 0;
-    this.isRoot = !hasQueryParams;
-
     const paramId = params['id'];
 
     if (paramId && paramId !== this.tenantId) {
