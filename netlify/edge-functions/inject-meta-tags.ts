@@ -2,6 +2,7 @@ import type { Context } from "@netlify/edge-functions";
 
 interface TenantConfig {
   business_name?: string;
+  intro_text?: string;
   meta_description?: string;
   meta_keywords?: string;
   meta_tag_image?: string;
@@ -55,63 +56,115 @@ export default async (request: Request, context: Context) => {
     const html = await response.text();
     let modifiedHtml = html;
 
-    // Only replace title if business_name exists
+    // Replace <title> if business_name is available
     if (tenantConfig.business_name) {
-      console.log('Replacing title with:', tenantConfig.business_name);
       modifiedHtml = modifiedHtml.replace(
         /<title>.*?<\/title>/i,
         `<title>${escapeHtml(tenantConfig.business_name)}</title>`
       );
     }
 
-    // Only replace meta description if it exists
-    if (tenantConfig.meta_description) {
-      console.log('Replacing meta description');
-      modifiedHtml = modifiedHtml.replace(
-        /<meta name="description" content=".*?">/i,
-        `<meta name="description" content="${escapeHtml(tenantConfig.meta_description)}">`
-      );
-    }
-
-    // Build Open Graph and other meta tags only for available fields
-    const metaTags: string[] = [];
-
+    // Replace meta name="title" if business_name is available
     if (tenantConfig.business_name) {
-      metaTags.push(`<meta property="og:title" content="${escapeHtml(tenantConfig.business_name)}">`);
-      metaTags.push(`<meta property="og:site_name" content="${escapeHtml(tenantConfig.business_name)}">`);
-      metaTags.push(`<meta name="twitter:title" content="${escapeHtml(tenantConfig.business_name)}">`);
-    }
-
-    if (tenantConfig.meta_description) {
-      metaTags.push(`<meta property="og:description" content="${escapeHtml(tenantConfig.meta_description)}">`);
-      metaTags.push(`<meta name="twitter:description" content="${escapeHtml(tenantConfig.meta_description)}">`);
-    }
-
-    if (tenantConfig.meta_tag_image) {
-      metaTags.push(`<meta property="og:image" content="${escapeHtml(tenantConfig.meta_tag_image)}">`);
-      metaTags.push(`<meta name="twitter:image" content="${escapeHtml(tenantConfig.meta_tag_image)}">`);
-    }
-
-    if (tenantConfig.meta_keywords) {
-      metaTags.push(`<meta name="keywords" content="${escapeHtml(tenantConfig.meta_keywords)}">`);
-    }
-
-    // Always add these if we have any tenant data
-    if (metaTags.length > 0) {
-      metaTags.push(`<meta property="og:type" content="website">`);
-      metaTags.push(`<meta property="og:url" content="${url.toString()}">`);
-      metaTags.push(`<meta name="twitter:card" content="summary_large_image">`);
-    }
-
-    // Insert meta tags before closing </head> if we have any
-    if (metaTags.length > 0) {
-      const metaTagsHtml = '\n  ' + metaTags.join('\n  ');
       modifiedHtml = modifiedHtml.replace(
-        /<\/head>/i,
-        `${metaTagsHtml}\n</head>`
+        /<meta name="title" content="[^"]*">/i,
+        `<meta name="title" content="${escapeHtml(tenantConfig.business_name)}">`
       );
-      console.log('Meta tags injected successfully for tenant:', tenantId);
     }
+
+    // Replace meta name="description" if intro_text is available
+    if (tenantConfig.intro_text) {
+      modifiedHtml = modifiedHtml.replace(
+        /<meta name="description" content="[^"]*">/i,
+        `<meta name="description" content="${escapeHtml(tenantConfig.intro_text)}">`
+      );
+    }
+
+    // Replace meta name="keywords" if meta_keywords is available
+    if (tenantConfig.meta_keywords) {
+      modifiedHtml = modifiedHtml.replace(
+        /<meta name="keywords" content="[^"]*">/i,
+        `<meta name="keywords" content="${escapeHtml(tenantConfig.meta_keywords)}">`
+      );
+    }
+
+    // Replace meta name="author" if business_name is available
+    if (tenantConfig.business_name) {
+      modifiedHtml = modifiedHtml.replace(
+        /<meta name="author" content="[^"]*">/i,
+        `<meta name="author" content="${escapeHtml(tenantConfig.business_name)}">`
+      );
+    }
+
+    // Replace Open Graph title if business_name is available
+    if (tenantConfig.business_name) {
+      modifiedHtml = modifiedHtml.replace(
+        /<meta property="og:title" content="[^"]*">/i,
+        `<meta property="og:title" content="${escapeHtml(tenantConfig.business_name)}">`
+      );
+    }
+
+    // Replace Open Graph description if meta_description is available
+    if (tenantConfig.meta_description) {
+      modifiedHtml = modifiedHtml.replace(
+        /<meta property="og:description" content="[^"]*">/i,
+        `<meta property="og:description" content="${escapeHtml(tenantConfig.meta_description)}">`
+      );
+    }
+
+    // Replace Open Graph image if meta_tag_image is available
+    if (tenantConfig.meta_tag_image) {
+      modifiedHtml = modifiedHtml.replace(
+        /<meta property="og:image" content="[^"]*">/i,
+        `<meta property="og:image" content="${escapeHtml(tenantConfig.meta_tag_image)}">`
+      );
+    }
+
+    // Replace Open Graph site_name if business_name is available
+    if (tenantConfig.business_name) {
+      modifiedHtml = modifiedHtml.replace(
+        /<meta property="og:site_name" content="[^"]*">/i,
+        `<meta property="og:site_name" content="${escapeHtml(tenantConfig.business_name)}">`
+      );
+    }
+
+    // Replace Twitter card image if meta_tag_image is available
+    if (tenantConfig.meta_tag_image) {
+      modifiedHtml = modifiedHtml.replace(
+        /<meta property="twitter:card" content="[^"]*">/i,
+        `<meta property="twitter:card" content="summary_large_image">`
+      );
+      modifiedHtml = modifiedHtml.replace(
+        /<meta property="twitter:image" content="[^"]*">/i,
+        `<meta property="twitter:image" content="${escapeHtml(tenantConfig.meta_tag_image)}">`
+      );
+    }
+
+    // Replace Twitter title if business_name is available
+    if (tenantConfig.business_name) {
+      modifiedHtml = modifiedHtml.replace(
+        /<meta property="twitter:title" content="[^"]*">/i,
+        `<meta property="twitter:title" content="${escapeHtml(tenantConfig.business_name)}">`
+      );
+    }
+
+    // Replace Twitter description if intro_text is available
+    if (tenantConfig.intro_text) {
+      modifiedHtml = modifiedHtml.replace(
+        /<meta property="twitter:description" content="[^"]*">/i,
+        `<meta property="twitter:description" content="${escapeHtml(tenantConfig.intro_text)}">`
+      );
+    }
+
+    // Replace apple-mobile-web-app-title if business_name is available
+    if (tenantConfig.business_name) {
+      modifiedHtml = modifiedHtml.replace(
+        /<meta name="apple-mobile-web-app-title" content="[^"]*">/i,
+        `<meta name="apple-mobile-web-app-title" content="${escapeHtml(tenantConfig.business_name)}">`
+      );
+    }
+
+    console.log('Meta tags updated successfully for tenant:', tenantId);
 
     // Return modified HTML
     return new Response(modifiedHtml, {
