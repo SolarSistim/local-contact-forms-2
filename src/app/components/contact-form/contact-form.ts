@@ -57,8 +57,6 @@ export class ContactForm implements OnInit, OnDestroy {
   reasonOptions: string[] = [];
   tenantId: string | null = null;
   private recaptchaWidgetId: number | null = null;
-  private recaptchaRetryCount = 0;
-  private readonly MAX_RECAPTCHA_RETRIES = 20; // 10 seconds (20 * 500ms)
 
   constructor(
     private fb: FormBuilder,
@@ -159,12 +157,15 @@ export class ContactForm implements OnInit, OnDestroy {
         // Update meta tags for SEO
         this.updateMetaTags(config);
 
-        // Initialize reCAPTCHA in browser (will handle loading state)
+        // Hide loading so form can render
+        this.loading = false;
+
+        // Mark as ready to show content (browser only)
         if (isPlatformBrowser(this.platformId)) {
-          setTimeout(() => this.initializeRecaptcha(), 100);
-        } else {
-          // SSR: just hide loading
-          this.loading = false;
+          setTimeout(() => {
+            this.isReady = true;
+            this.initializeRecaptcha();
+          }, 100);
         }
       },
       error: (err) => {
@@ -189,65 +190,34 @@ export class ContactForm implements OnInit, OnDestroy {
   }
 
   private initializeRecaptcha(): void {
-    console.log('🔴 initializeRecaptcha called (attempt', this.recaptchaRetryCount + 1, '/', this.MAX_RECAPTCHA_RETRIES, ')');
+    console.log('🔴 initializeRecaptcha called');
     console.log('🔴 grecaptcha defined?', typeof grecaptcha !== 'undefined');
     console.log('🔴 site key:', this.tenantConfig?.recaptcha_site_key);
     console.log('🔴 element exists?', !!document.getElementById('recaptcha-element'));
     console.log('🔴 widget already created?', this.recaptchaWidgetId);
 
-    // Check if reCAPTCHA script hasn't loaded yet
     if (typeof grecaptcha === 'undefined') {
-      this.recaptchaRetryCount++;
-
-      if (this.recaptchaRetryCount >= this.MAX_RECAPTCHA_RETRIES) {
-        console.error('❌ reCAPTCHA failed to load after maximum retries');
-        this.error = 'Unable to load security verification. Please refresh the page or try again later.';
-        this.loading = false;
-        this.isReady = true;
-        return;
-      }
-
-      console.warn('⚠️ reCAPTCHA not loaded yet, retrying...', this.recaptchaRetryCount, '/', this.MAX_RECAPTCHA_RETRIES);
+      console.warn('⚠️ reCAPTCHA not loaded yet, retrying...');
       setTimeout(() => this.initializeRecaptcha(), 500);
       return;
     }
 
-    // Check for site key
     if (!this.tenantConfig?.recaptcha_site_key) {
       console.error('❌ reCAPTCHA site key not available in config');
-      this.error = 'Configuration error: Missing security key. Please contact support.';
-      this.loading = false;
-      this.isReady = true;
       return;
     }
 
-    // Check for DOM element
     const element = document.getElementById('recaptcha-element');
     if (!element) {
-      this.recaptchaRetryCount++;
-
-      if (this.recaptchaRetryCount >= this.MAX_RECAPTCHA_RETRIES) {
-        console.error('❌ reCAPTCHA element not found after maximum retries');
-        this.error = 'Unable to initialize form. Please refresh the page.';
-        this.loading = false;
-        this.isReady = true;
-        return;
-      }
-
-      console.warn('⚠️ reCAPTCHA element not found, retrying...', this.recaptchaRetryCount, '/', this.MAX_RECAPTCHA_RETRIES);
-      setTimeout(() => this.initializeRecaptcha(), 500);
+      console.error('❌ reCAPTCHA element not found in DOM');
       return;
     }
 
-    // Already initialized
-    if (this.recaptchaWidgetId !== null) {
+    if (this.recaptchaWidgetId) {
       console.log('✅ reCAPTCHA already initialized');
-      this.loading = false;
-      this.isReady = true;
       return;
     }
 
-    // Try to render reCAPTCHA
     try {
       console.log('🔵 Rendering reCAPTCHA...');
       this.recaptchaWidgetId = grecaptcha.render('recaptcha-element', {
@@ -260,16 +230,8 @@ export class ContactForm implements OnInit, OnDestroy {
         }
       });
       console.log('✅ reCAPTCHA rendered successfully!');
-
-      // Reset retry count and show form
-      this.recaptchaRetryCount = 0;
-      this.loading = false;
-      this.isReady = true;
     } catch (e) {
       console.error('❌ Error initializing reCAPTCHA:', e);
-      this.error = 'Failed to initialize security verification. Please refresh the page.';
-      this.loading = false;
-      this.isReady = true;
     }
   }
 
