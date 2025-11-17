@@ -261,7 +261,6 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
     
     const rowData = [
       timestampWithTZ,
-      timestamp,
       formData.firstName,
       formData.lastName,
       formData.email,
