@@ -361,13 +361,13 @@ console.log('Submission inserted at top successfully');
 
       // Prepare tracking row data
       const trackingRow = [
-        timestampWithTZ,                    // date
-        businessName || formData.tenantId,  // client
-        notifyEmail || 'not set',           // to_address
-        testTenantValue || 'FALSE',         // test_tenant
-        platformInfo,                       // platform
-        userAgent,                          // browser_agent
-        userIP                              // ip_address
+        `${timestampWithTZ}`,                                    // date
+        `${businessName || formData.tenantId}`,                  // client
+        `${notifyEmail || 'not set'}`,                           // to_address
+        `${testTenantValue || 'FALSE'}`,                         // test_tenant
+        `${userIP}`,                                             // ip_address
+        `${userAgent}`,                                          // browser_agent
+        `${platformInfo}`                                        // platform
       ];
 
       console.log('Logging to master tracking sheet:', masterTrackingSheetId);
