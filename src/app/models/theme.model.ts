@@ -1,4 +1,4 @@
-export type ThemeName = 'Fern' | 'Lilac' | 'Lemoncello' | 'Sapphire' | 'Crimson' | 'Light' | 'Dark';
+export type ThemeName = 'Fern' | 'Lilac' | 'Lemoncello' | 'Sapphire' | 'Crimson' | 'Light' | 'Dark' | 'Light Lavender';
 
 export interface ThemeColors {
   headerBackground: string;

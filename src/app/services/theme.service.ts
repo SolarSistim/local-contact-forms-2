@@ -170,6 +170,30 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     errorColor: '#cc3333',
     successColor: '#66cc99',
     borderColor: '#2A313C'
+  },
+  'Light Lavender': {
+    headerBackground: '#6a1b9a',
+    headerText: '#ffffff',
+    infoPanelBackground: '#333333',
+    infoPanelText: '#ffffff',
+    infoPanelHeading: '#ffffff',
+    infoPanelIcon: '#6a1b9a',
+    formPanelBackground: '#ffffff',
+    formPanelText: '#333333',
+    formFieldBorder: '#e0e0e0',
+    formFieldBackground: '#fafafa',
+    formFieldText: '#333333',
+    buttonEnabledBackground: '#6a1b9a',
+    buttonEnabledText: '#ffffff',
+    buttonDisabledBackground: '#b8b8b8',
+    buttonDisabledText: '#666666',
+    buttonHoverBackground: '#7b1fa2',
+    buttonHoverText: '#ffffff',
+    spinnerColor: '#6a1b9a',
+    pageBackground: '#ffffff',
+    errorColor: '#d32f2f',
+    successColor: '#388e3c',
+    borderColor: '#e0e0e0'
   }
 };
 
