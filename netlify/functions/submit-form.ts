@@ -366,8 +366,8 @@ console.log('Submission inserted at top successfully');
         `${notifyEmail || 'not set'}`,                           // to_address
         `${testTenantValue || 'FALSE'}`,                         // test_tenant
         `${userIP}`,                                             // ip_address
-        `${userAgent}`,                                          // browser_agent
         `${platformInfo}`                                        // platform
+        `${userAgent}`,                                          // browser_agent
       ];
 
       console.log('Logging to master tracking sheet:', masterTrackingSheetId);
