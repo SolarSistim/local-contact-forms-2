@@ -20,6 +20,13 @@ const contentType = response.headers.get("content-type");
 
   // Get the tenant ID from query parameters
   const url = new URL(request.url);
+
+  // Skip edge function on localhost to avoid interfering with development
+  if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+    console.log('[inject-meta-tags] Skipping on localhost');
+    return response;
+  }
+
   const pathParts = url.pathname.split('/').filter(part => part.length > 0);
   
   // Check if this is a contact route with an ID

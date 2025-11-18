@@ -23,6 +23,7 @@ import { AdaDialog } from './legal-stuff/ada-dialog/ada-dialog';
 import { TermsDialog } from './legal-stuff/terms-dialog/terms-dialog';
 import { PrivacyDialog } from './legal-stuff/privacy-dialog/privacy-dialog';
 import { finalize } from 'rxjs/operators';
+import { combineLatest } from 'rxjs';
 
 declare const grecaptcha: any;
 
@@ -77,21 +78,20 @@ ngOnInit(): void {
   this.initializeForm();
 
   // Check both route params (/contact/:id) and query params (?id=xxx)
-  this.route.params.subscribe(params => {
-    const paramId = params['id'];
+  combineLatest([this.route.params, this.route.queryParams]).subscribe(([params, queryParams]) => {
+    console.log('🟣 combineLatest fired - params:', params, 'queryParams:', queryParams);
 
-    if (paramId && paramId !== this.tenantId) {
-      this.tenantId = paramId;
-      this.loadTenantConfig(paramId);
-    }
-  });
+    // Prefer route params over query params
+    const tenantId = params['id'] || queryParams['id'];
 
-  this.route.queryParams.subscribe(params => {
-    const queryId = params['id'];
+    console.log('🟣 Extracted tenantId:', tenantId, 'Current tenantId:', this.tenantId);
 
-    if (queryId && queryId !== this.tenantId) {
-      this.tenantId = queryId;
-      this.loadTenantConfig(queryId);
+    if (tenantId && tenantId !== this.tenantId) {
+      console.log('🟣 Loading tenant config for:', tenantId);
+      this.tenantId = tenantId;
+      this.loadTenantConfig(tenantId);
+    } else {
+      console.log('🟣 Skipping load - tenantId already set or missing');
     }
   });
 }
@@ -146,6 +146,8 @@ ngOnInit(): void {
   }
 
   private loadTenantConfig(tenantId: string): void {
+    console.log('🟡 loadTenantConfig called for tenantId:', tenantId);
+    console.log('🟡 Setting loading=true, this will HIDE the form');
     this.loading = true;
     this.isReady = false;   // 🔧 reset ready flag
     this.error = null;      // 🔧 clear any previous errors
@@ -243,6 +245,16 @@ ngOnInit(): void {
           }
         });
         console.log('✅ reCAPTCHA rendered successfully! Widget ID:', this.recaptchaWidgetId);
+
+        // Debug: Check if element still exists after 2 seconds
+        setTimeout(() => {
+          const stillExists = document.getElementById('recaptcha-element');
+          console.log('🔍 reCAPTCHA element still exists after 2s?', !!stillExists);
+          if (stillExists) {
+            console.log('🔍 Element has children?', stillExists.children.length > 0);
+            console.log('🔍 Element innerHTML length:', stillExists.innerHTML.length);
+          }
+        }, 2000);
       } catch (e) {
         console.error('❌ Error rendering reCAPTCHA widget:', e);
         // Reset widget ID so it can be retried
