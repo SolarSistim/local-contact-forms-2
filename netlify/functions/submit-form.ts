@@ -366,7 +366,7 @@ console.log('Submission inserted at top successfully');
         `${notifyEmail || 'not set'}`,                           // to_address
         `${testTenantValue || 'FALSE'}`,                         // test_tenant
         `${userIP}`,                                             // ip_address
-        `${platformInfo}`                                        // platform
+        `${platformInfo}`,                                        // platform
         `${userAgent}`,                                          // browser_agent
       ];
 
