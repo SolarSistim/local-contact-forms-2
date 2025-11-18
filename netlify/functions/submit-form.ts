@@ -384,7 +384,8 @@ console.log('Submission inserted at top successfully');
       // Find the submissions tracking sheet
       const trackingSheet = trackingSpreadsheet.data.sheets?.find(
         sheet => sheet.properties?.title?.toLowerCase() === 'submissions' ||
-                 sheet.properties?.title?.toLowerCase() === 'tracking'
+                 sheet.properties?.title?.toLowerCase() === 'tracking' ||
+                 sheet.properties?.title?.toLowerCase() === 'submit_history'
       );
 
       if (!trackingSheet?.properties || trackingSheet.properties.sheetId === undefined) {
