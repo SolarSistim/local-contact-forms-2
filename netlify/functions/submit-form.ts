@@ -323,6 +323,112 @@ await sheets.spreadsheets.values.update({
 });
 console.log('Submission inserted at top successfully');
 
+    // ---- Log submission to master tracking spreadsheet ----
+    try {
+      const masterTrackingSheetId = '1-j1qhdR0ERzDkJlgy1klls5ztJdbJMpHbLDfH6BXVQk';
+
+      // Get user IP address
+      const userIP = event.headers['x-forwarded-for']?.split(',')[0] ||
+                     event.headers['x-nf-client-connection-ip'] ||
+                     'unknown';
+
+      // Parse user agent for platform info
+      const userAgent = event.headers['user-agent'] || 'unknown';
+      let platform = 'unknown';
+
+      if (userAgent.includes('Mobile') || userAgent.includes('Android') || userAgent.includes('iPhone')) {
+        platform = 'Mobile';
+      } else if (userAgent.includes('Tablet') || userAgent.includes('iPad')) {
+        platform = 'Tablet';
+      } else {
+        platform = 'Desktop';
+      }
+
+      // Extract browser info
+      let browser = 'unknown';
+      if (userAgent.includes('Chrome') && !userAgent.includes('Edg')) {
+        browser = 'Chrome';
+      } else if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) {
+        browser = 'Safari';
+      } else if (userAgent.includes('Firefox')) {
+        browser = 'Firefox';
+      } else if (userAgent.includes('Edg')) {
+        browser = 'Edge';
+      }
+
+      const platformInfo = `${platform} - ${browser}`;
+
+      // Determine if test tenant
+      const isTestTenant = formData.tenantId.toLowerCase().includes('test') ||
+                          formData.tenantId.toLowerCase().includes('demo') ||
+                          formData.tenantId === 'local-contact-forms';
+
+      // Prepare tracking row data
+      const trackingRow = [
+        timestampWithTZ,                    // Timestamp
+        businessName || formData.tenantId,  // Tenant Name
+        userIP,                             // User IP
+        platformInfo,                       // Platform Info
+        notifyEmail || 'not set',           // Notification Email
+        isTestTenant ? 'TRUE' : 'FALSE',    // Test Tenant
+        userAgent                           // Full User Agent (for reference)
+      ];
+
+      console.log('Logging to master tracking sheet:', masterTrackingSheetId);
+
+      // Get the tracking spreadsheet to find the sheet ID
+      const trackingSpreadsheet = await sheets.spreadsheets.get({
+        spreadsheetId: masterTrackingSheetId,
+      });
+
+      // Find the submissions tracking sheet
+      const trackingSheet = trackingSpreadsheet.data.sheets?.find(
+        sheet => sheet.properties?.title?.toLowerCase() === 'submissions' ||
+                 sheet.properties?.title?.toLowerCase() === 'tracking'
+      );
+
+      if (!trackingSheet?.properties || trackingSheet.properties.sheetId === undefined) {
+        console.error('Could not find tracking sheet in master spreadsheet');
+      } else {
+        const trackingSheetId = trackingSheet.properties.sheetId;
+        const trackingSheetName = trackingSheet.properties.title || 'submissions';
+
+        // Insert a new row at position 1 (right after header)
+        await sheets.spreadsheets.batchUpdate({
+          spreadsheetId: masterTrackingSheetId,
+          requestBody: {
+            requests: [
+              {
+                insertDimension: {
+                  range: {
+                    sheetId: trackingSheetId,
+                    dimension: 'ROWS',
+                    startIndex: 1,
+                    endIndex: 2,
+                  },
+                },
+              },
+            ],
+          },
+        });
+
+        // Write the tracking data to row 2 (index 1, right after header)
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: masterTrackingSheetId,
+          range: `${trackingSheetName}!A2:G2`,
+          valueInputOption: 'USER_ENTERED',
+          requestBody: {
+            values: [trackingRow],
+          },
+        });
+
+        console.log('Master tracking entry logged successfully');
+      }
+    } catch (trackingError: any) {
+      console.error('Failed to log to master tracking sheet:', trackingError);
+      // Don't fail the entire submission if tracking fails
+    }
+
     // ---- Send email notification via Gmail (best-effort) ----
     if (notifyEmail && process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
       try {
