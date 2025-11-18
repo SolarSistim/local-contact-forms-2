@@ -193,6 +193,7 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
       };
     }
 
+    const testTenantValue = tenantRow[2]; // test_tenant column (TRUE/FALSE)
     const configSheetId = tenantRow[3]; // config_sheet_id column
     const submissionsSheetId = tenantRow[4]; // submissions_sheet_id column
 
@@ -358,11 +359,6 @@ console.log('Submission inserted at top successfully');
 
       const platformInfo = `${platform} - ${browser}`;
 
-      // Determine if test tenant
-      const isTestTenant = formData.tenantId.toLowerCase().includes('test') ||
-                          formData.tenantId.toLowerCase().includes('demo') ||
-                          formData.tenantId === 'local-contact-forms';
-
       // Prepare tracking row data
       const trackingRow = [
         timestampWithTZ,                    // Timestamp
@@ -370,7 +366,7 @@ console.log('Submission inserted at top successfully');
         userIP,                             // User IP
         platformInfo,                       // Platform Info
         notifyEmail || 'not set',           // Notification Email
-        isTestTenant ? 'TRUE' : 'FALSE',    // Test Tenant
+        testTenantValue || 'FALSE',         // Test Tenant (from global config)
         userAgent                           // Full User Agent (for reference)
       ];
 
