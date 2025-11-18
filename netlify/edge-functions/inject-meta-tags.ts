@@ -9,24 +9,31 @@ interface TenantConfig {
 }
 
 export default async (request: Request, context: Context) => {
-  // Get the original response
-  const response = await context.next();
+  // Get the original response
+  const response = await context.next();
 
   // Only process HTML requests
-  const contentType = response.headers.get("content-type");
-  if (!contentType || !contentType.includes("text/html")) {
-    return response;
-  }
+const contentType = response.headers.get("content-type");
+  if (!contentType || !contentType.includes("text/html")) {
+    return response;
+  }
 
   // Get the tenant ID from query parameters
-const url = new URL(request.url);
+  const url = new URL(request.url);
   const pathParts = url.pathname.split('/').filter(part => part.length > 0);
   
   // Check if this is a contact route with an ID
   let tenantId: string | null = null;
-  if (pathParts.length >= 2 && pathParts[0] === 'contact') {
-    tenantId = pathParts[1];
-  }
+
+  if (url.searchParams.has('id')) {
+      tenantId = url.searchParams.get('id');
+      console.log('Tenant ID found in query param:', tenantId);
+    }
+
+  else if (pathParts.length >= 2 && pathParts[0] === 'contact') {
+    tenantId = pathParts[1];
+    console.log('Tenant ID found in path:', tenantId);
+  }
 
   // If no tenant ID, return original response
   if (!tenantId) {

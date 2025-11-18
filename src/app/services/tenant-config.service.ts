@@ -16,7 +16,7 @@ export class TenantConfigService {
    * Fetches tenant configuration from Google Sheets via Netlify Function
    */
   getTenantConfig(tenantId: string): Observable<TenantConfig> {
-    return this.http.get<{ config: TenantConfig }>(`${this.baseUrl}/get-tenant-config?tenantId=${tenantId}`)
+    return this.http.get<{ config: TenantConfig }>(`${this.baseUrl}/get-tenant-config?id=${tenantId}`)
       .pipe(
         map(response => response.config),
         catchError(this.handleError)

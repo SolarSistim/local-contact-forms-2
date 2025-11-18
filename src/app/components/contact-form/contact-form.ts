@@ -76,12 +76,22 @@ export class ContactForm implements OnInit, OnDestroy {
 ngOnInit(): void {
   this.initializeForm();
 
+  // Check both route params (/contact/:id) and query params (?id=xxx)
   this.route.params.subscribe(params => {
     const paramId = params['id'];
 
     if (paramId && paramId !== this.tenantId) {
       this.tenantId = paramId;
       this.loadTenantConfig(paramId);
+    }
+  });
+
+  this.route.queryParams.subscribe(params => {
+    const queryId = params['id'];
+
+    if (queryId && queryId !== this.tenantId) {
+      this.tenantId = queryId;
+      this.loadTenantConfig(queryId);
     }
   });
 }
