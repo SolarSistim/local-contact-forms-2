@@ -431,7 +431,7 @@ console.log('Submission inserted at top successfully');
       try {
         console.log('Sending notification email to:', notifyEmail);
         await transporter.sendMail({
-          from: `"Local Contact Forms" <${process.env.GMAIL_USER}>`,
+          from: `"Local Contact Forms" <donotreply@localcontactforms.com>`,
           to: notifyEmail,
           subject: `New Contact Form Submission - ${businessName || 'Your Business'}`,
           html: `
@@ -469,6 +469,10 @@ console.log('Submission inserted at top successfully');
 
               <p style="color: #6b7280; font-size: 12px; text-align: center;">
                 This email was sent from your <a href="https://www.localcontactforms.com" style="color: #2563EB;">Local Contact Forms</a> account.
+              </p>
+              <p style="color: #6b7280; font-size: 12px; text-align: center; margin-top: 4px;">
+                Please do not reply to this email. To contact Local Contact Forms, please
+                <a href="https://app.localcontactforms.com/?id=local-contact-forms" style="color: #2563EB;">click here</a>.
               </p>
             </div>
           `,
