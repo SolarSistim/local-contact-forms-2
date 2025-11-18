@@ -77,12 +77,12 @@ export class ContactForm implements OnInit, OnDestroy {
 ngOnInit(): void {
   this.initializeForm();
 
-  // Check both route params (/contact/:id) and query params (?id=xxx)
+  // Check both route params (/contact/:id) and query params (?id=xxx or ?tenantId=xxx)
   combineLatest([this.route.params, this.route.queryParams]).subscribe(([params, queryParams]) => {
     console.log('🟣 combineLatest fired - params:', params, 'queryParams:', queryParams);
 
-    // Prefer route params over query params
-    const tenantId = params['id'] || queryParams['id'];
+    // Prefer route params over query params, check both 'id' and 'tenantId' for backwards compatibility
+    const tenantId = params['id'] || queryParams['id'] || queryParams['tenantId'];
 
     console.log('🟣 Extracted tenantId:', tenantId, 'Current tenantId:', this.tenantId);
 
