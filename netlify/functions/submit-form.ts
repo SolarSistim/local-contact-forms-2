@@ -365,9 +365,9 @@ console.log('Submission inserted at top successfully');
         businessName || formData.tenantId,  // client
         notifyEmail || 'not set',           // to_address
         testTenantValue || 'FALSE',         // test_tenant
-        userIP,                              // ip_address
         platformInfo,                       // platform
-        userAgent                          // browser_agent
+        userAgent,                          // browser_agent
+        userIP                              // ip_address
       ];
 
       console.log('Logging to master tracking sheet:', masterTrackingSheetId);
