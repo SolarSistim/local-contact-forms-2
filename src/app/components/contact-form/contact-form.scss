@@ -10,7 +10,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: calc(100vh - 60px);
+  min-height: calc(100vh - 33px);
   box-sizing: border-box;
 
   // Large Desktop (1920px and above)
@@ -103,6 +103,7 @@
   padding: 1rem 2rem;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
   height: auto;
+  margin-bottom: 0;
 
   .footer-content {
     max-width: 1200px;
