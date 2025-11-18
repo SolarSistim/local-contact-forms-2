@@ -174,8 +174,8 @@ const THEMES: Record<ThemeName, ThemeColors> = {
   'Light Lavender': {
     headerBackground: '#6a1b9a',
     headerText: '#ffffff',
-    infoPanelBackground: '#333333',
-    infoPanelText: '#ffffff',
+    infoPanelBackground: '#FAFAFA',
+    infoPanelText: '#000000ff',
     infoPanelHeading: '#ffffff',
     infoPanelIcon: '#6a1b9a',
     formPanelBackground: '#ffffff',
@@ -190,7 +190,7 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     buttonHoverBackground: '#7b1fa2',
     buttonHoverText: '#ffffff',
     spinnerColor: '#6a1b9a',
-    pageBackground: '#ffffff',
+    pageBackground: '#292929ff',
     errorColor: '#d32f2f',
     successColor: '#388e3c',
     borderColor: '#e0e0e0'
