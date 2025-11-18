@@ -89,24 +89,20 @@
 
 .parent-card-container {
   margin-top: 20px;
-  margin-bottom: 55px;
+  margin-bottom: 16px;
   width: 100%;
 }
 
-// Sticky Footer Styles
+// Footer Styles
 .sticky-footer {
   opacity: 0.3;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  position: relative;
   background-color: var(--theme-header-background, #f5f5f5);
   color: var(--theme-header-text, #333);
   border-top: 1px solid var(--theme-border-color, #ddd);
   padding: 1rem 2rem;
-  z-index: 1000;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-  height: 6px;
+  height: auto;
 
   .footer-content {
     max-width: 1200px;
@@ -148,26 +144,27 @@
       line-height: 32px;
       padding: 0;
       margin-left: 0.5rem;
+      color: var(--theme-header-text, #333);
 
       mat-icon {
         font-size: 24px;
         width: 24px;
         height: 24px;
         line-height: 24px;
+        color: var(--theme-header-text, #333);
       }
     }
   }
 
   @media (max-width: 768px) {
     padding: 0.75rem 1rem;
-    height: 10px;
+    height: auto;
+    min-height: 40px;
 
     .footer-content {
       font-size: 0.75rem;
       gap: 0.25rem;
-      line-height: 24px;
-      position: relative;
-      bottom: 10px;
+      line-height: 1.5;
 
       .desktop-only {
         display: none;
@@ -186,14 +183,14 @@
   }
 
   @media (max-width: 480px) {
-    height: 20px;
+    padding: 0.5rem;
+    min-height: 36px;
 
     .footer-content {
       font-size: 0.7rem;
       justify-content: center;
       text-align: center;
-      line-height: 20px;
-      bottom: 5px;
+      line-height: 1.4;
     }
   }
 }
@@ -515,7 +512,32 @@
     }
   }
 }
+
+@media (max-width: 600px) {
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .recaptcha-container {
+    width: 100%;
+  }
+
+  .form-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .recaptcha-container #recaptcha-element {
+    transform: scale(0.85);
+    transform-origin: 0 0;
+  }
 }
+
+
+}
+
 
 .recaptcha-container {
   margin: 0;
@@ -594,5 +616,13 @@
 ::ng-deep .mat-mdc-option,
 ::ng-deep .mat-mdc-select-value,
 ::ng-deep .mat-mdc-select-trigger {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif !important;
+}
+
+// Fix Material menu font
+::ng-deep .mat-mdc-menu-panel,
+::ng-deep .mat-mdc-menu-content,
+::ng-deep .mat-mdc-menu-item,
+::ng-deep .mat-mdc-menu-item-text {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif !important;
 }
