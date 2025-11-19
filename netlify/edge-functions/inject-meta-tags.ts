@@ -169,10 +169,10 @@ const contentType = response.headers.get("content-type");
     }
 
     // Replace Twitter description if intro_text is available
-    if (tenantConfig.intro_text) {
+    if (tenantConfig.meta_description) {
       modifiedHtml = modifiedHtml.replace(
         /<meta property="twitter:description" content="[^"]*">/i,
-        `<meta property="twitter:description" content="${escapeHtml(tenantConfig.intro_text)}">`
+        `<meta property="twitter:description" content="${escapeHtml(tenantConfig.meta_description)}">`
       );
     }
 
