@@ -118,7 +118,7 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
       };
     }
 
-    const submissionsSheetId = tenantRow[4];
+    const submissionsSheetId = tenantRow[3];
 
     if (!submissionsSheetId) {
       throw new Error('Tenant submissions sheet ID not configured');
