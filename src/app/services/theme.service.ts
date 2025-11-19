@@ -94,7 +94,7 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     buttonHoverBackground: '#214C57',
     buttonHoverText: '#BEEAF7',
     spinnerColor: '#95D5A8',
-    pageBackground: '#0F1511',
+    pageBackground: '#ffffffff',
     errorColor: '#cc3333',
     successColor: '#66cc99',
     borderColor: '#95D5A8'
@@ -176,7 +176,7 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     headerText: '#ffffff',
     infoPanelBackground: '#FAFAFA',
     infoPanelText: '#000000ff',
-    infoPanelHeading: '#ffffff',
+    infoPanelHeading: '#6a1b9a',
     infoPanelIcon: '#6a1b9a',
     formPanelBackground: '#ffffff',
     formPanelText: '#333333',
