@@ -93,10 +93,10 @@ const contentType = response.headers.get("content-type");
     }
 
     // Replace meta name="description" if intro_text is available
-    if (tenantConfig.intro_text) {
+    if (tenantConfig.meta_description) {
       modifiedHtml = modifiedHtml.replace(
         /<meta name="description" content="[^"]*">/i,
-        `<meta name="description" content="${escapeHtml(tenantConfig.intro_text)}">`
+        `<meta name="description" content="${escapeHtml(tenantConfig.meta_description)}">`
       );
     }
 
