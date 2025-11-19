@@ -118,12 +118,15 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
       };
     }
 
-    const configSheetId = tenantRow[3]; // config_sheet_id column
+    const submissionsSheetId = tenantRow[4];
 
-    // Fetch tenant config from tenant's config sheet
+    if (!submissionsSheetId) {
+      throw new Error('Tenant submissions sheet ID not configured');
+    }
+
     const configResponse = await sheets.spreadsheets.values.get({
-      spreadsheetId: configSheetId,
-      range: 'config!A2:B100', // Key-Value pairs
+      spreadsheetId: submissionsSheetId,
+      range: 'config!A2:B100',
     });
 
     const configRows = configResponse.data.values || [];

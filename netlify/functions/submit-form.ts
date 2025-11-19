@@ -193,28 +193,26 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
       };
     }
 
-    const testTenantValue = tenantRow[2]; // test_tenant column (TRUE/FALSE)
-    const configSheetId = tenantRow[3]; // config_sheet_id column
-    const submissionsSheetId = tenantRow[4]; // submissions_sheet_id column
+    const testTenantValue = tenantRow[2];
+    const submissionsSheetId = tenantRow[4];
 
-    if (!configSheetId || !submissionsSheetId) {
-      console.error('Missing configSheetId or submissionsSheetId for tenant:', formData.tenantId, {
-        configSheetId,
+    if (!submissionsSheetId) {
+      console.error('Missing submissionsSheetId for tenant:', formData.tenantId, {
         submissionsSheetId,
       });
       return {
         statusCode: 500,
         headers,
         body: JSON.stringify({
-          error: 'Server misconfigured: tenant sheet IDs missing',
+          error: 'Server misconfigured: tenant submissions sheet ID missing',
         }),
       };
     }
 
     // ---- Fetch tenant config to get notify_submit and business_name ----
-    console.log('Fetching tenant config from sheet:', configSheetId);
+    console.log('Fetching tenant config from sheet:', submissionsSheetId);
     const configResponse = await sheets.spreadsheets.values.get({
-      spreadsheetId: configSheetId,
+      spreadsheetId: submissionsSheetId,
       range: 'config!A2:B100',
     });
 
