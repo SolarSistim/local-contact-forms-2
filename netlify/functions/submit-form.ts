@@ -194,7 +194,7 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
     }
 
     const testTenantValue = tenantRow[2];
-    const submissionsSheetId = tenantRow[4];
+    const submissionsSheetId = tenantRow[3];
 
     if (!submissionsSheetId) {
       console.error('Missing submissionsSheetId for tenant:', formData.tenantId, {
