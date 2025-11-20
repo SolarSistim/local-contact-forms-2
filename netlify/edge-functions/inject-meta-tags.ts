@@ -207,7 +207,8 @@ function escapeHtml(text: string | undefined): string {
     '&': '&amp;',
     '<': '&lt;',
     '>': '&gt;',
-    '"': '&quot;'
+    '"': '&quot;',
+    "'": '&#39;'
   };
-  return text.replace(/[&<>"]/g, (char) => map[char]);
+  return text.replace(/[&<>"']/g, (char) => map[char]);
 }
