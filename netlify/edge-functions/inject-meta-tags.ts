@@ -32,9 +32,6 @@ export default async (request: Request, context: Context) => {
     return response;
   }
 
-  // Get the tenant ID from query parameters
-  const url = new URL(request.url);
-
   // Skip edge function on localhost to avoid interfering with development
   if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
     console.log('[inject-meta-tags] Skipping on localhost');
