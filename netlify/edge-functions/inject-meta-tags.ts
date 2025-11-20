@@ -243,6 +243,9 @@ async function trackPageVisit(request: Request, context: Context) {
       hour12: true
     }).format(date);
 
+    // Get domain
+    const domain = url.hostname;
+
     // Get referrer
     const referrer = request.headers.get('referer') || 'Direct';
 
@@ -268,6 +271,7 @@ async function trackPageVisit(request: Request, context: Context) {
     const analyticsData = {
       tenantId,
       date: cstDate,
+      domain,
       referrer,
       geoLocation,
       ip,

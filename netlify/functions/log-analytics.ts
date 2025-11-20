@@ -68,14 +68,15 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
     const rowData = [
       analyticsData.date,           // 1st column: Date
       analyticsData.tenantId,       // 2nd column: Tenant ID
-      analyticsData.referrer,       // 3rd column: Referrer
-      analyticsData.geoLocation,    // 4th column: Geographic location
-      analyticsData.ip,             // 5th column: IP address
-      analyticsData.pageUrl,        // 6th column: Page URL/Path
-      analyticsData.deviceType,     // 7th column: Device Type
-      analyticsData.sessionId,      // 8th column: Session ID
-      analyticsData.platform,       // 9th column: Platform
-      analyticsData.userAgent       // 10th column: User Agent
+      analyticsData.domain,         // 3rd column: Domain
+      analyticsData.referrer,       // 4th column: Referrer
+      analyticsData.geoLocation,    // 5th column: Geographic location
+      analyticsData.ip,             // 6th column: IP address
+      analyticsData.pageUrl,        // 7th column: Page URL/Path
+      analyticsData.deviceType,     // 8th column: Device Type
+      analyticsData.sessionId,      // 9th column: Session ID
+      analyticsData.platform,       // 10th column: Platform
+      analyticsData.userAgent       // 11th column: User Agent
     ];
 
     // Check if the sheet exists and has headers
@@ -119,6 +120,7 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
             values: [[
               'Date',
               'Tenant ID',
+              'Domain',
               'Referrer',
               'Geographic Location',
               'IP Address',
@@ -138,7 +140,7 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
     // Append the analytics data
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEET_NAME}!A:J`,
+      range: `${SHEET_NAME}!A:K`,
       valueInputOption: 'RAW',
       requestBody: {
         values: [rowData],
