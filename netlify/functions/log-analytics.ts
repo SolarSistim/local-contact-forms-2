@@ -79,16 +79,21 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
       analyticsData.userAgent       // 11th column: User Agent
     ];
 
-    // Check if the sheet exists and has headers
+    // Check if the sheet exists and get its metadata
     let sheetExists = false;
+    let sheetId: number | undefined;
+    
     try {
       const sheetMetadata = await sheets.spreadsheets.get({
         spreadsheetId: SPREADSHEET_ID,
       });
       
-      sheetExists = sheetMetadata.data.sheets?.some(
-        sheet => sheet.properties?.title === SHEET_NAME
-      ) || false;
+      const sheet = sheetMetadata.data.sheets?.find(
+        s => s.properties?.title === SHEET_NAME
+      );
+      
+      sheetExists = !!sheet;
+      sheetId = sheet?.properties?.sheetId;
     } catch (error) {
       console.log('Could not check sheet existence:', error);
     }
@@ -96,7 +101,7 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
     // If sheet doesn't exist, create it with headers
     if (!sheetExists) {
       try {
-        await sheets.spreadsheets.batchUpdate({
+        const createResponse = await sheets.spreadsheets.batchUpdate({
           spreadsheetId: SPREADSHEET_ID,
           requestBody: {
             requests: [
@@ -110,6 +115,9 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
             ],
           },
         });
+
+        // Get the newly created sheet ID
+        sheetId = createResponse.data.replies?.[0]?.addSheet?.properties?.sheetId;
 
         // Add headers
         await sheets.spreadsheets.values.append({
@@ -137,10 +145,34 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
       }
     }
 
-    // Append the analytics data
-    await sheets.spreadsheets.values.append({
+    if (sheetId === undefined) {
+      throw new Error(`Could not find sheet ID for ${SHEET_NAME}`);
+    }
+
+    // Insert a new row at position 2 (right after header row)
+    await sheets.spreadsheets.batchUpdate({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEET_NAME}!A:K`,
+      requestBody: {
+        requests: [
+          {
+            insertDimension: {
+              range: {
+                sheetId: sheetId,
+                dimension: 'ROWS',
+                startIndex: 1, // Row 2 (0-indexed)
+                endIndex: 2,   // Insert 1 row
+              },
+              inheritFromBefore: false,
+            },
+          },
+        ],
+      },
+    });
+
+    // Now update the newly inserted row with our data
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${SHEET_NAME}!A2:K2`,
       valueInputOption: 'RAW',
       requestBody: {
         values: [rowData],
