@@ -9,10 +9,19 @@ interface TenantConfig {
 }
 
 export default async (request: Request, context: Context) => {
-  // Fire off analytics tracking asynchronously (non-blocking)
-  trackPageVisit(request, context).catch(err => {
-    console.error('Analytics tracking error (non-blocking):', err);
-  });
+  const url = new URL(request.url);
+  
+  // Only track analytics for actual user page visits (not internal function calls)
+  const isInternalRequest = url.pathname.startsWith('/.netlify/');
+  const userAgent = request.headers.get('user-agent') || '';
+  const isDeno = userAgent.includes('Deno/');
+  
+  // Fire off analytics tracking only for real user visits
+  if (!isInternalRequest && !isDeno) {
+    trackPageVisit(request, context).catch(err => {
+      console.error('Analytics tracking error (non-blocking):', err);
+    });
+  }
 
   // Get the original response
   const response = await context.next();
