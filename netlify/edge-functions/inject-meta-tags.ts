@@ -9,14 +9,19 @@ interface TenantConfig {
 }
 
 export default async (request: Request, context: Context) => {
-  // Get the original response
-  const response = await context.next();
+  // Fire off analytics tracking asynchronously (non-blocking)
+  trackPageVisit(request, context).catch(err => {
+    console.error('Analytics tracking error (non-blocking):', err);
+  });
+
+  // Get the original response
+  const response = await context.next();
 
   // Only process HTML requests
-const contentType = response.headers.get("content-type");
-  if (!contentType || !contentType.includes("text/html")) {
-    return response;
-  }
+  const contentType = response.headers.get("content-type");
+  if (!contentType || !contentType.includes("text/html")) {
+    return response;
+  }
 
   // Get the tenant ID from query parameters
   const url = new URL(request.url);
@@ -33,14 +38,13 @@ const contentType = response.headers.get("content-type");
   let tenantId: string | null = null;
 
   if (url.searchParams.has('id')) {
-      tenantId = url.searchParams.get('id');
-      console.log('Tenant ID found in query param:', tenantId);
-    }
-
+    tenantId = url.searchParams.get('id');
+    console.log('Tenant ID found in query param:', tenantId);
+  }
   else if (pathParts.length >= 2 && pathParts[0] === 'contact') {
-    tenantId = pathParts[1];
-    console.log('Tenant ID found in path:', tenantId);
-  }
+    tenantId = pathParts[1];
+    console.log('Tenant ID found in path:', tenantId);
+  }
 
   // If no tenant ID, return original response
   if (!tenantId) {
@@ -199,6 +203,124 @@ const contentType = response.headers.get("content-type");
     return response;
   }
 };
+
+// Async function to track page visits (fire and forget)
+async function trackPageVisit(request: Request, context: Context) {
+  try {
+    const url = new URL(request.url);
+    
+    // Extract tenant ID
+    const pathParts = url.pathname.split('/').filter(part => part.length > 0);
+    let tenantId: string | null = null;
+    
+    if (url.searchParams.has('id')) {
+      tenantId = url.searchParams.get('id');
+    } else if (pathParts.length >= 2 && pathParts[0] === 'contact') {
+      tenantId = pathParts[1];
+    }
+
+    // Skip analytics if no tenant ID
+    if (!tenantId) {
+      return;
+    }
+
+    // Get current date/time in CST format
+    const date = new Date();
+    const cstDate = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Chicago',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    }).format(date);
+
+    // Get referrer
+    const referrer = request.headers.get('referer') || 'Direct';
+
+    // Get geographic location from Netlify context
+    const geo = context.geo;
+    const geoLocation = geo ? `${geo.city || 'Unknown'}, ${geo.subdivision?.name || geo.country?.name || 'Unknown'}` : 'Unknown';
+
+    // Get IP address
+    const ip = context.ip || request.headers.get('x-forwarded-for') || 'Unknown';
+
+    // Get page URL/path
+    const pageUrl = url.pathname + url.search;
+
+    // Parse User Agent for device type and platform
+    const userAgent = request.headers.get('user-agent') || 'Unknown';
+    const deviceType = getDeviceType(userAgent);
+    const platform = getPlatform(userAgent);
+
+    // Generate session ID (simple hash of IP + UA + date)
+    const sessionId = await generateSessionId(ip, userAgent, date.toDateString());
+
+    // Prepare analytics data
+    const analyticsData = {
+      tenantId,
+      date: cstDate,
+      referrer,
+      geoLocation,
+      ip,
+      pageUrl,
+      deviceType,
+      sessionId,
+      platform,
+      userAgent
+    };
+
+    // Send to Google Sheets via Netlify function
+    const analyticsUrl = `${url.origin}/.netlify/functions/log-analytics`;
+    
+    // Fire and forget - don't await
+    fetch(analyticsUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(analyticsData)
+    }).catch(err => {
+      console.error('Failed to send analytics (non-blocking):', err);
+    });
+
+  } catch (error) {
+    console.error('Error in trackPageVisit (non-blocking):', error);
+  }
+}
+
+// Helper function to determine device type
+function getDeviceType(userAgent: string): string {
+  if (/mobile|android|iphone|ipod|blackberry|iemobile|opera mini/i.test(userAgent)) {
+    return 'Mobile';
+  } else if (/tablet|ipad|playbook|silk/i.test(userAgent)) {
+    return 'Tablet';
+  }
+  return 'Desktop';
+}
+
+// Helper function to determine platform
+function getPlatform(userAgent: string): string {
+  if (/windows/i.test(userAgent)) return 'Windows';
+  if (/macintosh|mac os x/i.test(userAgent)) return 'Mac';
+  if (/linux/i.test(userAgent)) return 'Linux';
+  if (/android/i.test(userAgent)) return 'Android';
+  if (/iphone|ipad|ipod/i.test(userAgent)) return 'iOS';
+  return 'Unknown';
+}
+
+// Helper function to generate a session ID
+async function generateSessionId(ip: string, userAgent: string, date: string): Promise<string> {
+  const data = `${ip}-${userAgent}-${date}`;
+  const encoder = new TextEncoder();
+  const dataBuffer = encoder.encode(data);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex.substring(0, 16); // Use first 16 chars
+}
 
 // Helper function to escape HTML special characters
 function escapeHtml(text: string | undefined): string {
