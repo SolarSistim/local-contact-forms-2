@@ -81,7 +81,7 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
 
     // Check if the sheet exists and get its metadata
     let sheetExists = false;
-    let sheetId: number | undefined;
+    let sheetId: number | null | undefined;
     
     try {
       const sheetMetadata = await sheets.spreadsheets.get({
@@ -145,7 +145,7 @@ const handler: Handler = async (event: HandlerEvent, context: HandlerContext) =>
       }
     }
 
-    if (sheetId === undefined) {
+    if (sheetId === undefined || sheetId === null) {
       throw new Error(`Could not find sheet ID for ${SHEET_NAME}`);
     }
 
