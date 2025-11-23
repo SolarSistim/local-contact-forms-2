@@ -20,8 +20,8 @@ export interface TenantConfig {
   // Form Configuration
   reason_for_contact: string; // Comma-separated values
   recaptcha_site_key?: string; // reCAPTCHA public site key
-  show_email_on_phone?: string; // Yes/No to show email field on form
-  show_phone_number_on_form?: string; // Yes/No to show phone field on form
+  show_email_on_form?: string; // Yes/No to show email in info panel
+  show_phone_number_on_form?: string; // Yes/No to show phone in info panel
 
   // Social Media URLs (all optional)
   facebook_url?: string;
@@ -53,8 +53,8 @@ export interface GlobalTenantConfig {
 export interface FormSubmission {
   firstName: string;
   lastName: string;
-  email?: string;
-  phone?: string;
+  email: string;
+  phone: string;
   reason: string;
   message: string;
   tenantId: string;

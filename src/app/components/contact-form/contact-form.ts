@@ -145,30 +145,6 @@ ngOnInit(): void {
     return null;
   }
 
-  private updateFormValidators(): void {
-    const emailControl = this.contactForm.get('email');
-    const phoneControl = this.contactForm.get('phone');
-
-    if (emailControl) {
-      if (this.shouldShowEmail()) {
-        emailControl.setValidators([Validators.required, this.emailValidator]);
-      } else {
-        emailControl.clearValidators();
-        emailControl.setValue('');
-      }
-      emailControl.updateValueAndValidity();
-    }
-
-    if (phoneControl) {
-      if (this.shouldShowPhone()) {
-        phoneControl.setValidators([Validators.required, this.phoneValidator]);
-      } else {
-        phoneControl.clearValidators();
-        phoneControl.setValue('');
-      }
-      phoneControl.updateValueAndValidity();
-    }
-  }
 
   private loadTenantConfig(tenantId: string): void {
     console.log('🟡 loadTenantConfig called for tenantId:', tenantId);
@@ -194,9 +170,6 @@ ngOnInit(): void {
           this.themeService.applyTheme(config.theme as any);
 
           this.updateMetaTags(config);
-
-          // Update form validators based on config
-          this.updateFormValidators();
 
           if (isPlatformBrowser(this.platformId)) {
             setTimeout(() => {
@@ -369,7 +342,7 @@ ngOnInit(): void {
 
   shouldShowEmail(): boolean {
     if (!this.tenantConfig) return true;
-    return this.tenantConfig.show_email_on_phone?.toLowerCase() !== 'no';
+    return this.tenantConfig.show_email_on_form?.toLowerCase() !== 'no';
   }
 
   shouldShowPhone(): boolean {

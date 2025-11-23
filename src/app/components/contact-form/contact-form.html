@@ -54,7 +54,7 @@
             </div>
           </div>
 
-          <div class="info-item" *ngIf="tenantConfig?.business_phone">
+          <div class="info-item" *ngIf="tenantConfig?.business_phone && shouldShowPhone()">
             <mat-icon>phone</mat-icon>
             <div>
               <div class="info-header">
@@ -71,7 +71,7 @@
             </div>
           </div>
 
-          <div class="info-item" *ngIf="tenantConfig?.notify_on_submit">
+          <div class="info-item" *ngIf="tenantConfig?.notify_on_submit && shouldShowEmail()">
             <mat-icon>email</mat-icon>
             <div>
               <div class="info-header">
@@ -193,7 +193,7 @@
 
             <!-- Email / Phone Row -->
             <div class="form-row">
-              <mat-form-field appearance="fill" *ngIf="shouldShowEmail()">
+              <mat-form-field appearance="fill">
                 <mat-label>Email</mat-label>
                 <input matInput type="email" formControlName="email" placeholder="your@email.com" required>
                 <mat-error *ngIf="contactForm.get('email')?.hasError('required')">
@@ -207,7 +207,7 @@
                 </mat-hint>
               </mat-form-field>
 
-              <mat-form-field appearance="fill" *ngIf="shouldShowPhone()">
+              <mat-form-field appearance="fill">
                 <mat-label>Phone</mat-label>
                 <input matInput type="tel" formControlName="phone" placeholder="(555) 123-4567" required>
                 <mat-error *ngIf="contactForm.get('phone')?.hasError('required')">
